@@ -12,6 +12,8 @@ class BoardBase(SQLModel):
     gateway_url: str | None = None
     gateway_main_session_key: str | None = None
     gateway_workspace_root: str | None = None
+    identity_template: str | None = None
+    soul_template: str | None = None
 
 
 class BoardCreate(BoardBase):
@@ -25,6 +27,8 @@ class BoardUpdate(SQLModel):
     gateway_token: str | None = None
     gateway_main_session_key: str | None = None
     gateway_workspace_root: str | None = None
+    identity_template: str | None = None
+    soul_template: str | None = None
 
 
 class BoardRead(BoardBase):

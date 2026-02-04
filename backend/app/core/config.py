@@ -25,5 +25,10 @@ class Settings(BaseSettings):
     # Database lifecycle
     db_auto_migrate: bool = False
 
+    # Logging
+    log_level: str = "INFO"
+    log_format: str = "text"
+    log_use_utc: bool = False
+
 
 settings = Settings()

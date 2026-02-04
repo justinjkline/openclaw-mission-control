@@ -1,7 +1,5 @@
 # HEARTBEAT.md
 
-If this file is empty, skip heartbeat work.
-
 ## Purpose
 This file defines the single, authoritative heartbeat loop. Follow it exactly.
 
@@ -9,7 +7,10 @@ This file defines the single, authoritative heartbeat loop. Follow it exactly.
 - BASE_URL (e.g. http://localhost:8000)
 - AUTH_TOKEN (agent token)
 - AGENT_NAME
+- AGENT_ID
 - BOARD_ID
+
+If any required input is missing, stop and request a provisioning update.
 
 ## Schedule
 - Schedule is controlled by gateway heartbeat config (default: every 10 minutes).
@@ -24,6 +25,7 @@ This file defines the single, authoritative heartbeat loop. Follow it exactly.
 ## Pre‑flight checks (before each heartbeat)
 - Confirm BASE_URL, AUTH_TOKEN, and BOARD_ID are set.
 - Verify API access:
+  - GET $BASE_URL/healthz must succeed.
   - GET $BASE_URL/api/v1/boards must succeed.
   - GET $BASE_URL/api/v1/boards/{BOARD_ID}/tasks must succeed.
 - If any check fails, stop and retry next heartbeat.
@@ -43,9 +45,13 @@ curl -s "$BASE_URL/api/v1/boards" \
   -H "X-Agent-Token: $AUTH_TOKEN"
 ```
 
-3) For each board, list tasks:
+3) For the assigned board, list tasks (use filters to avoid large responses):
 ```bash
-curl -s "$BASE_URL/api/v1/boards/{BOARD_ID}/tasks" \
+curl -s "$BASE_URL/api/v1/boards/{BOARD_ID}/tasks?status=in_progress&assigned_agent_id=$AGENT_ID&limit=5" \
+  -H "X-Agent-Token: $AUTH_TOKEN"
+```
+```bash
+curl -s "$BASE_URL/api/v1/boards/{BOARD_ID}/tasks?status=inbox&unassigned=true&limit=20" \
   -H "X-Agent-Token: $AUTH_TOKEN"
 ```
 

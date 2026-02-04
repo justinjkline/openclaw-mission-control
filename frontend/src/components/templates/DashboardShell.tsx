@@ -2,9 +2,10 @@
 
 import type { ReactNode } from "react";
 
-import { SignedIn, UserButton } from "@clerk/nextjs";
+import { SignedIn } from "@clerk/nextjs";
 
 import { BrandMark } from "@/components/atoms/BrandMark";
+import { UserMenu } from "@/components/organisms/UserMenu";
 
 export function DashboardShell({ children }: { children: ReactNode }) {
   return (
@@ -14,12 +15,10 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         aria-hidden="true"
       />
       <div className="relative flex min-h-screen w-full flex-col">
-        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-[color:var(--border)] bg-[color:rgba(244,246,250,0.8)] px-6 py-5 backdrop-blur">
+        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-[color:var(--border)] bg-[color:rgba(244,246,250,0.8)] px-6 py-3 backdrop-blur">
           <BrandMark />
           <SignedIn>
-            <div className="rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] px-2 py-1 shadow-sm">
-              <UserButton />
-            </div>
+            <UserMenu />
           </SignedIn>
         </header>
         <div className="flex-1 px-6 py-6">

@@ -18,5 +18,7 @@ class Board(TenantScoped, table=True):
     gateway_token: str | None = Field(default=None)
     gateway_main_session_key: str | None = Field(default=None)
     gateway_workspace_root: str | None = Field(default=None)
+    identity_template: str | None = Field(default=None)
+    soul_template: str | None = Field(default=None)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)

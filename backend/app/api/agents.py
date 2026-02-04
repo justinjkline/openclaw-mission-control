@@ -208,7 +208,9 @@ async def create_agent(
         )
     session.commit()
     try:
-        await send_provisioning_message(agent, board, raw_token, provision_token)
+        await send_provisioning_message(
+            agent, board, raw_token, provision_token, auth.user
+        )
         record_activity(
             session,
             event_type="agent.provision.requested",
@@ -288,7 +290,9 @@ async def update_agent(
     session.commit()
     session.refresh(agent)
     try:
-        await send_update_message(agent, board, raw_token, provision_token)
+        await send_update_message(
+            agent, board, raw_token, provision_token, auth.user
+        )
         record_activity(
             session,
             event_type="agent.update.requested",
@@ -375,7 +379,9 @@ async def heartbeat_or_create_agent(
             )
         session.commit()
         try:
-            await send_provisioning_message(agent, board, raw_token, provision_token)
+            await send_provisioning_message(
+                agent, board, raw_token, provision_token, actor.user
+            )
             record_activity(
                 session,
                 event_type="agent.provision.requested",
@@ -405,7 +411,9 @@ async def heartbeat_or_create_agent(
         try:
             board = _require_board(session, str(agent.board_id) if agent.board_id else None)
             config = _require_gateway_config(board)
-            await send_provisioning_message(agent, board, raw_token, provision_token)
+            await send_provisioning_message(
+                agent, board, raw_token, provision_token, actor.user
+            )
             record_activity(
                 session,
                 event_type="agent.provision.requested",

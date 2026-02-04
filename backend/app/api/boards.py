@@ -101,6 +101,10 @@ def create_board(
     data = payload.model_dump()
     if data.get("gateway_token") == "":
         data["gateway_token"] = None
+    if data.get("identity_template") == "":
+        data["identity_template"] = None
+    if data.get("soul_template") == "":
+        data["soul_template"] = None
     if data.get("gateway_url"):
         if not data.get("gateway_main_session_key"):
             raise HTTPException(
@@ -137,6 +141,10 @@ def update_board(
     updates = payload.model_dump(exclude_unset=True)
     if updates.get("gateway_token") == "":
         updates["gateway_token"] = None
+    if updates.get("identity_template") == "":
+        updates["identity_template"] = None
+    if updates.get("soul_template") == "":
+        updates["soul_template"] = None
     for key, value in updates.items():
         setattr(board, key, value)
     if board.gateway_url:

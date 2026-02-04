@@ -9,6 +9,7 @@ from app.api.auth import router as auth_router
 from app.api.boards import router as boards_router
 from app.api.gateway import router as gateway_router
 from app.api.tasks import router as tasks_router
+from app.api.users import router as users_router
 from app.core.config import settings
 from app.core.logging import configure_logging
 from app.db.session import init_db
@@ -38,6 +39,16 @@ def health() -> dict[str, bool]:
     return {"ok": True}
 
 
+@app.get("/healthz")
+def healthz() -> dict[str, bool]:
+    return {"ok": True}
+
+
+@app.get("/readyz")
+def readyz() -> dict[str, bool]:
+    return {"ok": True}
+
+
 api_v1 = APIRouter(prefix="/api/v1")
 api_v1.include_router(auth_router)
 api_v1.include_router(agents_router)
@@ -45,4 +56,5 @@ api_v1.include_router(activity_router)
 api_v1.include_router(gateway_router)
 api_v1.include_router(boards_router)
 api_v1.include_router(tasks_router)
+api_v1.include_router(users_router)
 app.include_router(api_v1)

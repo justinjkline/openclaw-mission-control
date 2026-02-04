@@ -15,6 +15,7 @@ Before doing anything else:
 ## Memory
 - Daily log: memory/YYYY-MM-DD.md
 - Long-term: memory.md (main session only)
+
 Write things down. Do not rely on short-term context.
 
 ## Safety

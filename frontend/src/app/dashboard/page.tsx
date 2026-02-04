@@ -20,8 +20,8 @@ export default function DashboardPage() {
           </p>
           <SignInButton
             mode="modal"
-            forceRedirectUrl="/boards"
-            signUpForceRedirectUrl="/boards"
+            forceRedirectUrl="/onboarding"
+            signUpForceRedirectUrl="/onboarding"
           >
             <Button>Sign in</Button>
           </SignInButton>

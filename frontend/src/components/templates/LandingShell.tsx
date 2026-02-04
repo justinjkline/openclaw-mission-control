@@ -2,9 +2,10 @@
 
 import type { ReactNode } from "react";
 
-import { SignedIn, UserButton } from "@clerk/nextjs";
+import { SignedIn } from "@clerk/nextjs";
 
 import { BrandMark } from "@/components/atoms/BrandMark";
+import { UserMenu } from "@/components/organisms/UserMenu";
 
 export function LandingShell({ children }: { children: ReactNode }) {
   return (
@@ -27,9 +28,7 @@ export function LandingShell({ children }: { children: ReactNode }) {
           <header className="flex items-center justify-between gap-4">
             <BrandMark />
             <SignedIn>
-              <div className="rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] px-2 py-1 shadow-sm">
-                <UserButton />
-              </div>
+              <UserMenu />
             </SignedIn>
           </header>
           <main>{children}</main>

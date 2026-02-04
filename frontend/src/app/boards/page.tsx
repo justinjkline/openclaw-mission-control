@@ -15,6 +15,7 @@ import {
 import { DashboardSidebar } from "@/components/organisms/DashboardSidebar";
 import { DashboardShell } from "@/components/templates/DashboardShell";
 import { Button } from "@/components/ui/button";
+import { getApiBaseUrl } from "@/lib/api-base";
 import {
   Dialog,
   DialogContent,
@@ -30,9 +31,7 @@ type Board = {
   slug: string;
 };
 
-const apiBase =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ||
-  "http://localhost:8000";
+const apiBase = getApiBaseUrl();
 
 export default function BoardsPage() {
   const { getToken, isSignedIn } = useAuth();

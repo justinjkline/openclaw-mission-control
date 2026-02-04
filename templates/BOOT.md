@@ -1,10 +1,12 @@
 # BOOT.md
 
 On startup:
-1) Verify API reachability (GET {{ base_url }}/api/v1/gateway/status).
-   - A 401 Unauthorized response is acceptable here for agents (auth-protected endpoint).
+1) Verify API reachability (GET {{ base_url }}/healthz).
+
 2) Connect to Mission Control once by sending a heartbeat check-in.
-2a) Use task comments for all updates; do not send task updates to chat/web.
-2b) Follow the required comment format in AGENTS.md / HEARTBEAT.md.
+   - Use task comments for all updates; do not send task updates to chat/web.
+   - Follow the required comment format in AGENTS.md / HEARTBEAT.md.
+
 3) If you send a boot message, end with NO_REPLY.
-4) If BOOTSTRAP.md exists in this workspace, the agent should run it once and delete it.
+
+4) If BOOTSTRAP.md exists in this workspace, run it once and delete it.

@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { getApiBaseUrl } from "@/lib/api-base";
 
 type Board = {
   id: string;
@@ -57,9 +58,7 @@ type TaskComment = {
   created_at: string;
 };
 
-const apiBase =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ||
-  "http://localhost:8000";
+const apiBase = getApiBaseUrl();
 
 const priorities = [
   { value: "low", label: "Low" },

@@ -9,6 +9,8 @@ import { DashboardSidebar } from "@/components/organisms/DashboardSidebar";
 import { DashboardShell } from "@/components/templates/DashboardShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { getApiBaseUrl } from "@/lib/api-base";
 
 type Board = {
   id: string;
@@ -18,11 +20,11 @@ type Board = {
   gateway_token?: string | null;
   gateway_main_session_key?: string | null;
   gateway_workspace_root?: string | null;
+  identity_template?: string | null;
+  soul_template?: string | null;
 };
 
-const apiBase =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ||
-  "http://localhost:8000";
+const apiBase = getApiBaseUrl();
 
 const slugify = (value: string) =>
   value
@@ -39,6 +41,8 @@ export default function NewBoardPage() {
   const [gatewayToken, setGatewayToken] = useState("");
   const [gatewayMainSessionKey, setGatewayMainSessionKey] = useState("");
   const [gatewayWorkspaceRoot, setGatewayWorkspaceRoot] = useState("");
+  const [identityTemplate, setIdentityTemplate] = useState("");
+  const [soulTemplate, setSoulTemplate] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -62,6 +66,12 @@ export default function NewBoardPage() {
       }
       if (gatewayWorkspaceRoot.trim()) {
         payload.gateway_workspace_root = gatewayWorkspaceRoot.trim();
+      }
+      if (identityTemplate.trim()) {
+        payload.identity_template = identityTemplate.trim();
+      }
+      if (soulTemplate.trim()) {
+        payload.soul_template = soulTemplate.trim();
       }
       const response = await fetch(`${apiBase}/api/v1/boards`, {
         method: "POST",
@@ -168,6 +178,28 @@ export default function NewBoardPage() {
                 onChange={(event) => setGatewayWorkspaceRoot(event.target.value)}
                 placeholder="~/.openclaw"
                 disabled={isLoading}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-strong">
+                Identity template (optional)
+              </label>
+              <Textarea
+                value={identityTemplate}
+                onChange={(event) => setIdentityTemplate(event.target.value)}
+                placeholder="Override IDENTITY.md for agents in this board."
+                className="min-h-[140px]"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-strong">
+                Soul template (optional)
+              </label>
+              <Textarea
+                value={soulTemplate}
+                onChange={(event) => setSoulTemplate(event.target.value)}
+                placeholder="Override SOUL.md for agents in this board."
+                className="min-h-[160px]"
               />
             </div>
             {error ? (

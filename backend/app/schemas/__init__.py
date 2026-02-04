@@ -2,7 +2,7 @@ from app.schemas.activity_events import ActivityEventRead
 from app.schemas.agents import AgentCreate, AgentRead, AgentUpdate
 from app.schemas.boards import BoardCreate, BoardRead, BoardUpdate
 from app.schemas.tasks import TaskCreate, TaskRead, TaskUpdate
-from app.schemas.users import UserCreate, UserRead
+from app.schemas.users import UserCreate, UserRead, UserUpdate
 
 __all__ = [
     "ActivityEventRead",
@@ -17,4 +17,5 @@ __all__ = [
     "TaskUpdate",
     "UserCreate",
     "UserRead",
+    "UserUpdate",
 ]

@@ -12,6 +12,7 @@ from app.core.config import settings
 from app.integrations.openclaw_gateway import GatewayConfig, ensure_session, send_message
 from app.models.agents import Agent
 from app.models.boards import Board
+from app.models.users import User
 
 TEMPLATE_FILES = [
     "AGENTS.md",
@@ -64,11 +65,18 @@ def _template_env() -> Environment:
     )
 
 
-def _read_templates(context: dict[str, str]) -> dict[str, str]:
+def _read_templates(
+    context: dict[str, str], overrides: dict[str, str] | None = None
+) -> dict[str, str]:
     env = _template_env()
     templates: dict[str, str] = {}
+    override_map = overrides or {}
     for name in TEMPLATE_FILES:
         path = _templates_root() / name
+        override = override_map.get(name)
+        if override:
+            templates[name] = env.from_string(override).render(**context).strip()
+            continue
         if not path.exists():
             templates[name] = ""
             continue
@@ -90,7 +98,9 @@ def _workspace_path(agent_name: str, workspace_root: str) -> str:
     return f"{root}/workspace-{_slugify(agent_name)}"
 
 
-def _build_context(agent: Agent, board: Board, auth_token: str) -> dict[str, str]:
+def _build_context(
+    agent: Agent, board: Board, auth_token: str, user: User | None
+) -> dict[str, str]:
     if not board.gateway_workspace_root:
         raise ValueError("gateway_workspace_root is required")
     if not board.gateway_main_session_key:
@@ -111,25 +121,32 @@ def _build_context(agent: Agent, board: Board, auth_token: str) -> dict[str, str
         "auth_token": auth_token,
         "main_session_key": main_session_key,
         "workspace_root": workspace_root,
-        "user_name": "Unset",
-        "user_preferred_name": "Unset",
-        "user_timezone": "Unset",
-        "user_notes": "Fill in user context.",
+        "user_name": user.name if user else "",
+        "user_preferred_name": user.preferred_name if user else "",
+        "user_pronouns": user.pronouns if user else "",
+        "user_timezone": user.timezone if user else "",
+        "user_notes": user.notes if user else "",
+        "user_context": user.context if user else "",
     }
 
 
-def _build_file_blocks(context: dict[str, str]) -> str:
-    templates = _read_templates(context)
+def _build_file_blocks(context: dict[str, str], board: Board) -> str:
+    overrides: dict[str, str] = {}
+    if board.identity_template:
+        overrides["IDENTITY.md"] = board.identity_template
+    if board.soul_template:
+        overrides["SOUL.md"] = board.soul_template
+    templates = _read_templates(context, overrides=overrides)
     return "".join(
         _render_file_block(name, templates.get(name, "")) for name in TEMPLATE_FILES
     )
 
 
 def build_provisioning_message(
-    agent: Agent, board: Board, auth_token: str, confirm_token: str
+    agent: Agent, board: Board, auth_token: str, confirm_token: str, user: User | None
 ) -> str:
-    context = _build_context(agent, board, auth_token)
-    file_blocks = _build_file_blocks(context)
+    context = _build_context(agent, board, auth_token, user)
+    file_blocks = _build_file_blocks(context, board)
     heartbeat_snippet = json.dumps(
         {
             "id": _agent_key(agent),
@@ -173,10 +190,10 @@ def build_provisioning_message(
 
 
 def build_update_message(
-    agent: Agent, board: Board, auth_token: str, confirm_token: str
+    agent: Agent, board: Board, auth_token: str, confirm_token: str, user: User | None
 ) -> str:
-    context = _build_context(agent, board, auth_token)
-    file_blocks = _build_file_blocks(context)
+    context = _build_context(agent, board, auth_token, user)
+    file_blocks = _build_file_blocks(context, board)
     heartbeat_snippet = json.dumps(
         {
             "id": _agent_key(agent),
@@ -223,6 +240,7 @@ async def send_provisioning_message(
     board: Board,
     auth_token: str,
     confirm_token: str,
+    user: User | None,
 ) -> None:
     if not board.gateway_url:
         return
@@ -231,7 +249,7 @@ async def send_provisioning_message(
     main_session = board.gateway_main_session_key
     config = GatewayConfig(url=board.gateway_url, token=board.gateway_token)
     await ensure_session(main_session, config=config, label="Main Agent")
-    message = build_provisioning_message(agent, board, auth_token, confirm_token)
+    message = build_provisioning_message(agent, board, auth_token, confirm_token, user)
     await send_message(message, session_key=main_session, config=config, deliver=False)
 
 
@@ -240,6 +258,7 @@ async def send_update_message(
     board: Board,
     auth_token: str,
     confirm_token: str,
+    user: User | None,
 ) -> None:
     if not board.gateway_url:
         return
@@ -248,5 +267,5 @@ async def send_update_message(
     main_session = board.gateway_main_session_key
     config = GatewayConfig(url=board.gateway_url, token=board.gateway_token)
     await ensure_session(main_session, config=config, label="Main Agent")
-    message = build_update_message(agent, board, auth_token, confirm_token)
+    message = build_update_message(agent, board, auth_token, confirm_token, user)
     await send_message(message, session_key=main_session, config=config, deliver=False)

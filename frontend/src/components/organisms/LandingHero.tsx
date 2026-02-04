@@ -14,8 +14,8 @@ export function LandingHero() {
           <SignedOut>
             <SignInButton
               mode="modal"
-              forceRedirectUrl="/boards"
-              signUpForceRedirectUrl="/boards"
+              forceRedirectUrl="/onboarding"
+              signUpForceRedirectUrl="/onboarding"
             >
               <Button size="lg" className="w-full sm:w-auto">
                 Sign in to open mission control

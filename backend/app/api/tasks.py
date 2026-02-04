@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import asc, desc
 from sqlmodel import Session, col, select
 
@@ -70,11 +70,26 @@ def has_valid_recent_comment(
 
 @router.get("", response_model=list[TaskRead])
 def list_tasks(
+    status_filter: str | None = Query(default=None, alias="status"),
+    assigned_agent_id: UUID | None = None,
+    unassigned: bool | None = None,
+    limit: int | None = Query(default=None, ge=1, le=200),
     board: Board = Depends(get_board_or_404),
     session: Session = Depends(get_session),
     actor: ActorContext = Depends(require_admin_or_agent),
 ) -> list[Task]:
-    return list(session.exec(select(Task).where(Task.board_id == board.id)))
+    statement = select(Task).where(Task.board_id == board.id)
+    if status_filter:
+        statuses = [s.strip() for s in status_filter.split(",") if s.strip()]
+        if statuses:
+            statement = statement.where(col(Task.status).in_(statuses))
+    if assigned_agent_id is not None:
+        statement = statement.where(col(Task.assigned_agent_id) == assigned_agent_id)
+    if unassigned:
+        statement = statement.where(col(Task.assigned_agent_id).is_(None))
+    if limit is not None:
+        statement = statement.limit(limit)
+    return list(session.exec(statement))
 
 
 @router.post("", response_model=TaskRead)

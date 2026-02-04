@@ -2,7 +2,11 @@ export const customFetch = async <T>(
   url: string,
   options: RequestInit
 ): Promise<T> => {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+  const rawBaseUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!rawBaseUrl) {
+    throw new Error("NEXT_PUBLIC_API_URL is not set.");
+  }
+  const baseUrl = rawBaseUrl.replace(/\/+$/, "");
   const response = await fetch(`${baseUrl}${url}`, {
     ...options,
     headers: {
