@@ -200,7 +200,7 @@ def get_agent(
 
 
 @router.patch("/{agent_id}", response_model=AgentRead)
-def update_agent(
+async def update_agent(
     agent_id: str,
     payload: AgentUpdate,
     session: Session = Depends(get_session),
@@ -215,14 +215,58 @@ def update_agent(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="status is controlled by agent heartbeat",
         )
-    if "board_id" in updates and updates["board_id"]:
-        _require_board(session, str(updates["board_id"]))
+    if not updates:
+        return _with_computed_status(agent)
+    if "board_id" in updates:
+        _require_board(session, updates["board_id"])
     for key, value in updates.items():
         setattr(agent, key, value)
     agent.updated_at = datetime.utcnow()
     session.add(agent)
     session.commit()
     session.refresh(agent)
+    board = _require_board(session, agent.board_id)
+    config = _require_gateway_config(board)
+    session_key = agent.openclaw_session_id or _build_session_key(agent.name)
+    try:
+        await ensure_session(session_key, config=config, label=agent.name)
+        if not agent.openclaw_session_id:
+            agent.openclaw_session_id = session_key
+            session.add(agent)
+            session.commit()
+            session.refresh(agent)
+    except OpenClawGatewayError as exc:
+        _record_provisioning_failure(session, agent, str(exc))
+        session.commit()
+    raw_token = generate_agent_token()
+    agent.agent_token_hash = hash_agent_token(raw_token)
+    session.add(agent)
+    session.commit()
+    session.refresh(agent)
+    try:
+        await send_provisioning_message(agent, board, raw_token)
+        await _send_wakeup_message(agent, config)
+        record_activity(
+            session,
+            event_type="agent.reprovisioned",
+            message=f"Re-provisioned agent {agent.name}.",
+            agent_id=agent.id,
+        )
+        record_activity(
+            session,
+            event_type="agent.wakeup.sent",
+            message=f"Wakeup message sent to {agent.name}.",
+            agent_id=agent.id,
+        )
+        session.commit()
+    except OpenClawGatewayError as exc:
+        _record_provisioning_failure(session, agent, str(exc))
+        _record_wakeup_failure(session, agent, str(exc))
+        session.commit()
+    except Exception as exc:  # pragma: no cover - unexpected provisioning errors
+        _record_provisioning_failure(session, agent, str(exc))
+        _record_wakeup_failure(session, agent, str(exc))
+        session.commit()
     return _with_computed_status(agent)
 
 
