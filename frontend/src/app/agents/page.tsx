@@ -299,13 +299,13 @@ export default function AgentsPage() {
             >
               <Link
                 href={`/agents/${row.original.id}`}
-                className="inline-flex h-8 items-center justify-center rounded-lg border border-[color:var(--border)] px-3 text-xs font-medium text-muted transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)]"
+                className="inline-flex h-8 items-center justify-center rounded-md border border-slate-200 px-3 text-xs font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
               >
                 View
               </Link>
               <Link
                 href={`/agents/${row.original.id}/edit`}
-                className="inline-flex h-8 items-center justify-center rounded-lg border border-[color:var(--border)] px-3 text-xs font-medium text-muted transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)]"
+                className="inline-flex h-8 items-center justify-center rounded-md border border-slate-200 px-3 text-xs font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
               >
                 Edit
               </Link>
@@ -336,142 +336,146 @@ export default function AgentsPage() {
   return (
     <DashboardShell>
       <SignedOut>
-        <div className="flex h-full flex-col items-center justify-center gap-4 rounded-2xl surface-panel p-10 text-center lg:col-span-2">
-          <p className="text-sm text-muted">Sign in to view agents.</p>
-          <SignInButton
-            mode="modal"
-            forceRedirectUrl="/agents"
-            signUpForceRedirectUrl="/agents"
-          >
-            <Button>Sign in</Button>
-          </SignInButton>
+        <div className="col-span-2 flex min-h-[calc(100vh-64px)] items-center justify-center bg-slate-50 p-10 text-center">
+          <div className="rounded-xl border border-slate-200 bg-white px-8 py-6 shadow-sm">
+            <p className="text-sm text-slate-600">Sign in to view agents.</p>
+            <SignInButton
+              mode="modal"
+              forceRedirectUrl="/agents"
+              signUpForceRedirectUrl="/agents"
+            >
+              <Button className="mt-4">Sign in</Button>
+            </SignInButton>
+          </div>
         </div>
       </SignedOut>
       <SignedIn>
         <DashboardSidebar />
-        <div className="flex h-full flex-col gap-6 rounded-2xl surface-panel p-8">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-semibold text-strong">Agents</h2>
-              <p className="text-sm text-muted">
-                {agents.length} agent{agents.length === 1 ? "" : "s"} total.
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                onClick={handleRefresh}
-                disabled={isLoading}
-              >
-                Refresh
-              </Button>
-              <Button onClick={() => router.push("/agents/new")}>
-                New agent
-              </Button>
-            </div>
-          </div>
-
-          {error ? (
-            <div className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface-muted)] p-3 text-xs text-muted">
-              {error}
-            </div>
-          ) : null}
-
-          {agents.length === 0 && !isLoading ? (
-            <div className="flex flex-1 flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-[color:var(--border)] bg-[color:var(--surface-muted)] p-6 text-center text-sm text-muted">
-              No agents yet. Create your first agent to get started.
-            </div>
-          ) : (
-            <div className="overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)]">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-[color:var(--border)] text-sm">
-                  <thead className="bg-[color:var(--surface-muted)]">
-                    {table.getHeaderGroups().map((headerGroup) => (
-                      <tr key={headerGroup.id}>
-                        {headerGroup.headers.map((header) => (
-                          <th
-                            key={header.id}
-                            className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.22em] text-quiet"
-                          >
-                            {header.isPlaceholder
-                              ? null
-                              : flexRender(
-                                  header.column.columnDef.header,
-                                  header.getContext()
-                                )}
-                          </th>
-                        ))}
-                      </tr>
-                    ))}
-                  </thead>
-                  <tbody className="divide-y divide-[color:var(--border)] bg-[color:var(--surface)]">
-                    {table.getRowModel().rows.map((row) => (
-                      <tr
-                        key={row.id}
-                        className="cursor-pointer transition hover:bg-[color:var(--surface-muted)]"
-                        onClick={() => router.push(`/agents/${row.original.id}`)}
-                      >
-                        {row.getVisibleCells().map((cell) => (
-                          <td key={cell.id} className="px-4 py-3 align-top">
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext()
-                            )}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          <div className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4 text-sm text-muted">
-            <div className="flex flex-wrap items-center justify-between gap-3">
+        <main className="flex-1 overflow-y-auto bg-slate-50">
+          <div className="border-b border-slate-200 bg-white px-8 py-6">
+            <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-quiet">
-                  Gateway status
-                </p>
-                <p className="mt-1 text-sm text-strong">
-                  {gatewayStatus?.gateway_url ?? "Gateway URL not set"}
+                <h2 className="font-heading text-2xl font-semibold text-slate-900 tracking-tight">
+                  Agents
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  {agents.length} agent{agents.length === 1 ? "" : "s"} total.
                 </p>
               </div>
-              <div className="flex items-center gap-3">
-                <Select
-                  value={boardId}
-                  onValueChange={(value) => setBoardId(value)}
-                  disabled={boards.length === 0}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleRefresh}
+                  disabled={isLoading}
                 >
-                  <SelectTrigger className="h-8 w-[200px]">
-                    <SelectValue placeholder="Select board" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {boards.map((board) => (
-                      <SelectItem key={board.id} value={board.id}>
-                        {board.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <StatusPill status={gatewayStatus?.connected ? "online" : "offline"} />
-                <span className="text-xs text-quiet">
-                  {gatewayStatus?.sessions_count ?? 0} sessions
-                </span>
+                  Refresh
+                </Button>
+                <Button onClick={() => router.push("/agents/new")}>
+                  New agent
+                </Button>
               </div>
             </div>
-            {gatewayStatus?.error ? (
-              <p className="mt-3 text-xs text-[color:var(--danger)]">
-                {gatewayStatus.error}
-              </p>
-            ) : null}
-            {gatewayError ? (
-              <p className="mt-3 text-xs text-[color:var(--danger)]">
-                {gatewayError}
-              </p>
-            ) : null}
           </div>
-        </div>
+
+          <div className="p-8">
+            {error ? (
+              <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-600 shadow-sm">
+                {error}
+              </div>
+            ) : null}
+
+            {agents.length === 0 && !isLoading ? (
+              <div className="flex flex-1 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-200 bg-white/70 p-10 text-center text-sm text-slate-500">
+                No agents yet. Create your first agent to get started.
+              </div>
+            ) : (
+              <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-slate-200 text-sm">
+                    <thead className="bg-slate-50">
+                      {table.getHeaderGroups().map((headerGroup) => (
+                        <tr key={headerGroup.id}>
+                          {headerGroup.headers.map((header) => (
+                            <th
+                              key={header.id}
+                              className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500"
+                            >
+                              {header.isPlaceholder
+                                ? null
+                                : flexRender(
+                                    header.column.columnDef.header,
+                                    header.getContext()
+                                  )}
+                            </th>
+                          ))}
+                        </tr>
+                      ))}
+                    </thead>
+                    <tbody className="divide-y divide-slate-200 bg-white">
+                      {table.getRowModel().rows.map((row) => (
+                        <tr
+                          key={row.id}
+                          className="cursor-pointer transition hover:bg-slate-50"
+                          onClick={() => router.push(`/agents/${row.original.id}`)}
+                        >
+                          {row.getVisibleCells().map((cell) => (
+                            <td key={cell.id} className="px-4 py-3 align-top">
+                              {flexRender(
+                                cell.column.columnDef.cell,
+                                cell.getContext()
+                              )}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-6 rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Gateway status
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-slate-900">
+                    {gatewayStatus?.gateway_url ?? "Gateway URL not set"}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Select
+                    value={boardId}
+                    onValueChange={(value) => setBoardId(value)}
+                    disabled={boards.length === 0}
+                  >
+                    <SelectTrigger className="h-8 w-[200px]">
+                      <SelectValue placeholder="Select board" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {boards.map((board) => (
+                        <SelectItem key={board.id} value={board.id}>
+                          {board.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <StatusPill status={gatewayStatus?.connected ? "online" : "offline"} />
+                  <span className="text-xs text-slate-500">
+                    {gatewayStatus?.sessions_count ?? 0} sessions
+                  </span>
+                </div>
+              </div>
+              {gatewayStatus?.error ? (
+                <p className="mt-3 text-xs text-red-600">{gatewayStatus.error}</p>
+              ) : null}
+              {gatewayError ? (
+                <p className="mt-3 text-xs text-red-600">{gatewayError}</p>
+              ) : null}
+            </div>
+          </div>
+        </main>
       </SignedIn>
 
       <Dialog

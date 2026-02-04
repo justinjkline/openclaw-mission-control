@@ -122,13 +122,13 @@ export default function BoardsPage() {
           >
             <Link
               href={`/boards/${row.original.id}`}
-              className="inline-flex h-8 items-center justify-center rounded-lg border border-[color:var(--border)] px-3 text-xs font-medium text-muted transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)]"
+              className="inline-flex h-8 items-center justify-center rounded-md border border-slate-200 px-3 text-xs font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
             >
               Open
             </Link>
             <Link
               href={`/boards/${row.original.id}/edit`}
-              className="inline-flex h-8 items-center justify-center rounded-lg border border-[color:var(--border)] px-3 text-xs font-medium text-muted transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)]"
+              className="inline-flex h-8 items-center justify-center rounded-md border border-slate-200 px-3 text-xs font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
             >
               Edit
             </Link>
@@ -155,87 +155,95 @@ export default function BoardsPage() {
   return (
     <DashboardShell>
       <SignedOut>
-        <div className="flex h-full flex-col items-center justify-center gap-4 rounded-2xl surface-panel p-10 text-center lg:col-span-2">
-          <p className="text-sm text-muted">Sign in to view boards.</p>
-          <SignInButton
-            mode="modal"
-            forceRedirectUrl="/boards"
-            signUpForceRedirectUrl="/boards"
-          >
-            <Button>Sign in</Button>
-          </SignInButton>
+        <div className="col-span-2 flex min-h-[calc(100vh-64px)] items-center justify-center bg-slate-50 p-10 text-center">
+          <div className="rounded-xl border border-slate-200 bg-white px-8 py-6 shadow-sm">
+            <p className="text-sm text-slate-600">Sign in to view boards.</p>
+            <SignInButton
+              mode="modal"
+              forceRedirectUrl="/boards"
+              signUpForceRedirectUrl="/boards"
+            >
+              <Button className="mt-4">Sign in</Button>
+            </SignInButton>
+          </div>
         </div>
       </SignedOut>
       <SignedIn>
         <DashboardSidebar />
-        <div className="flex h-full flex-col gap-6 rounded-2xl surface-panel p-8">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-semibold text-strong">Boards</h2>
-              <p className="text-sm text-muted">
-                {sortedBoards.length} board
-                {sortedBoards.length === 1 ? "" : "s"} total.
-              </p>
+        <main className="flex-1 overflow-y-auto bg-slate-50">
+          <div className="border-b border-slate-200 bg-white px-8 py-6">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <h2 className="font-heading text-2xl font-semibold text-slate-900 tracking-tight">
+                  Boards
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  {sortedBoards.length} board
+                  {sortedBoards.length === 1 ? "" : "s"} total.
+                </p>
+              </div>
+              <Button onClick={() => router.push("/boards/new")}>
+                New board
+              </Button>
             </div>
-            <Button onClick={() => router.push("/boards/new")}>
-              New board
-            </Button>
           </div>
 
-          {error && (
-            <div className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface-muted)] p-3 text-xs text-muted">
-              {error}
-            </div>
-          )}
+          <div className="p-8">
+            {error && (
+              <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-600 shadow-sm">
+                {error}
+              </div>
+            )}
 
-          {sortedBoards.length === 0 && !isLoading ? (
-            <div className="flex flex-1 flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-[color:var(--border)] bg-[color:var(--surface-muted)] p-6 text-center text-sm text-muted">
-              No boards yet. Create your first board to get started.
-            </div>
-          ) : (
-            <div className="overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)]">
-              <table className="min-w-full divide-y divide-[color:var(--border)] text-sm">
-                <thead className="bg-[color:var(--surface-muted)]">
-                  {table.getHeaderGroups().map((headerGroup) => (
-                    <tr key={headerGroup.id}>
-                      {headerGroup.headers.map((header) => (
-                        <th
-                          key={header.id}
-                          className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.22em] text-quiet"
-                        >
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
-                        </th>
-                      ))}
-                    </tr>
-                  ))}
-                </thead>
-                <tbody className="divide-y divide-[color:var(--border)] bg-[color:var(--surface)]">
-                  {table.getRowModel().rows.map((row) => (
-                    <tr
-                      key={row.id}
-                      className="cursor-pointer transition hover:bg-[color:var(--surface-muted)]"
-                      onClick={() => router.push(`/boards/${row.original.id}`)}
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <td key={cell.id} className="px-4 py-3 align-top">
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+            {sortedBoards.length === 0 && !isLoading ? (
+              <div className="flex flex-1 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-200 bg-white/70 p-10 text-center text-sm text-slate-500">
+                No boards yet. Create your first board to get started.
+              </div>
+            ) : (
+              <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                <table className="min-w-full divide-y divide-slate-200 text-sm">
+                  <thead className="bg-slate-50">
+                    {table.getHeaderGroups().map((headerGroup) => (
+                      <tr key={headerGroup.id}>
+                        {headerGroup.headers.map((header) => (
+                          <th
+                            key={header.id}
+                            className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500"
+                          >
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext()
+                                )}
+                          </th>
+                        ))}
+                      </tr>
+                    ))}
+                  </thead>
+                  <tbody className="divide-y divide-slate-200 bg-white">
+                    {table.getRowModel().rows.map((row) => (
+                      <tr
+                        key={row.id}
+                        className="cursor-pointer transition hover:bg-slate-50"
+                        onClick={() => router.push(`/boards/${row.original.id}`)}
+                      >
+                        {row.getVisibleCells().map((cell) => (
+                          <td key={cell.id} className="px-4 py-3 align-top">
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </main>
       </SignedIn>
 
       <Dialog

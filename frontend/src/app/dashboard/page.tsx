@@ -182,7 +182,7 @@ function KpiCard({
   progress?: number;
 }) {
   return (
-    <div className="stat-card rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition">
+    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
       <div className="mb-4 flex items-center justify-between">
         <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
           {label}
