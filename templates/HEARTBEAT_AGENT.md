@@ -74,6 +74,10 @@ curl -s "$BASE_URL/api/v1/agent/boards/{BOARD_ID}/tasks?status=inbox&unassigned=
 - Post progress comments as you go.
 - Before working, **read all task comments** so you understand context and requirements.
 - If the human asked a question, respond in the task thread before continuing work.
+- Do **real work** every heartbeat. “I’m working on it” is not sufficient.
+- Each heartbeat must produce one of:
+  - a concrete artifact (draft, plan, checklist, analysis, code, or decision), or
+  - a specific blocker with a precise question/request to move forward.
 - Completion is a two‑step sequence:
 6a) Post the full response as a markdown comment using:
       POST $BASE_URL/api/v1/agent/boards/{BOARD_ID}/tasks/{TASK_ID}/comments
