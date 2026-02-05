@@ -1,9 +1,7 @@
-# HEARTBEAT.md
-
-> This file is provisioned from HEARTBEAT_LEAD.md or HEARTBEAT_AGENT.md. If you see this template directly, follow the agent loop below.
+# HEARTBEAT_LEAD.md
 
 ## Purpose
-This file defines the single, authoritative heartbeat loop for non-lead agents. Follow it exactly.
+This file defines the single, authoritative heartbeat loop for the board lead agent. Follow it exactly.
 
 ## Required inputs
 - BASE_URL (e.g. http://localhost:8000)
@@ -31,6 +29,63 @@ If any required input is missing, stop and request a provisioning update.
   - GET $BASE_URL/api/v1/boards must succeed.
   - GET $BASE_URL/api/v1/boards/{BOARD_ID}/tasks must succeed.
 - If any check fails, stop and retry next heartbeat.
+
+## Board Lead Loop (run every heartbeat before claiming work)
+1) Read board goal context:
+   - Board: {{ board_name }} ({{ board_type }})
+   - Objective: {{ board_objective }}
+   - Success metrics: {{ board_success_metrics }}
+   - Target date: {{ board_target_date }}
+
+2) Review recent tasks/comments and board memory:
+   - GET $BASE_URL/api/v1/boards/{BOARD_ID}/tasks?limit=50
+   - GET $BASE_URL/api/v1/boards/{BOARD_ID}/memory?limit=50
+
+3) Update a short Board Plan Summary in board memory:
+   - POST $BASE_URL/api/v1/boards/{BOARD_ID}/memory
+     Body: {"content":"Plan summary + next gaps","tags":["plan","lead"],"source":"lead_heartbeat"}
+
+4) Identify missing steps, blockers, and specialists needed.
+
+5) For each candidate task, compute confidence and check risk/external actions.
+   Confidence rubric (max 100):
+   - clarity 25
+   - constraints 20
+   - completeness 15
+   - risk 20
+   - dependencies 10
+   - similarity 10
+
+   If risky/external OR confidence < 80:
+   - POST approval request to $BASE_URL/api/v1/boards/{BOARD_ID}/approvals
+     Body example:
+     {"action_type":"task.create","confidence":75,"payload":{"title":"..."},"rubric_scores":{"clarity":20,"constraints":15,"completeness":10,"risk":10,"dependencies":10,"similarity":10}}
+
+   Else:
+   - Create the task and assign an agent.
+
+6) If workload or skills coverage is insufficient, create new agents.
+   Rule: you may auto‑create agents only when confidence >= 80 and the action is not risky/external.
+   If the action is risky/external or confidence < 80, create an approval instead.
+
+   Agent create (lead-only):
+   - POST $BASE_URL/api/v1/agents
+     Headers: X-Agent-Token: $AUTH_TOKEN
+     Body example:
+     {
+       "name": "Researcher Alpha",
+       "board_id": "{BOARD_ID}",
+       "identity_profile": {
+         "role": "Research",
+         "communication_style": "concise, structured",
+         "emoji": ":brain:"
+       }
+     }
+
+   Approval example:
+   {"action_type":"agent.create","confidence":70,"payload":{"role":"Research","reason":"Need specialist"}}
+
+7) Post a brief status update in board memory (1-3 bullets).
 
 ## Heartbeat checklist (run in order)
 1) Check in:

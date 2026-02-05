@@ -42,6 +42,9 @@ DEFAULT_GATEWAY_FILES = frozenset(
     }
 )
 
+HEARTBEAT_LEAD_TEMPLATE = "HEARTBEAT_LEAD.md"
+HEARTBEAT_AGENT_TEMPLATE = "HEARTBEAT_AGENT.md"
+
 
 def _repo_root() -> Path:
     return Path(__file__).resolve().parents[3]
@@ -78,6 +81,10 @@ def _template_env() -> Environment:
         undefined=StrictUndefined,
         keep_trailing_newline=True,
     )
+
+
+def _heartbeat_template_name(agent: Agent) -> str:
+    return HEARTBEAT_LEAD_TEMPLATE if agent.is_board_lead else HEARTBEAT_AGENT_TEMPLATE
 
 
 def _workspace_path(agent_name: str, workspace_root: str) -> str:
@@ -219,6 +226,14 @@ def _render_agent_files(
         if name == "MEMORY.md":
             rendered[name] = "# MEMORY\n\nBootstrap pending.\n"
             continue
+        if name == "HEARTBEAT.md":
+            heartbeat_template = _heartbeat_template_name(agent)
+            heartbeat_path = _templates_root() / heartbeat_template
+            if heartbeat_path.exists():
+                rendered[name] = (
+                    env.get_template(heartbeat_template).render(**context).strip()
+                )
+                continue
         override = overrides.get(name)
         if override:
             rendered[name] = env.from_string(override).render(**context).strip()

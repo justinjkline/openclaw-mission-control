@@ -189,8 +189,26 @@ def list_agents(
 async def create_agent(
     payload: AgentCreate,
     session: Session = Depends(get_session),
-    auth: AuthContext = Depends(require_admin_auth),
+    actor: ActorContext = Depends(require_admin_or_agent),
 ) -> Agent:
+    if actor.actor_type == "agent":
+        if not actor.agent or not actor.agent.is_board_lead:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only board leads can create agents",
+            )
+        if not actor.agent.board_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Board lead must be assigned to a board",
+            )
+        if payload.board_id and payload.board_id != actor.agent.board_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Board leads can only create agents in their own board",
+            )
+        payload = AgentCreate(**{**payload.model_dump(), "board_id": actor.agent.board_id})
+
     board = _require_board(session, payload.board_id)
     gateway, client_config = _require_gateway(session, board)
     data = payload.model_dump()
@@ -230,7 +248,14 @@ async def create_agent(
         )
     session.commit()
     try:
-        await provision_agent(agent, board, gateway, raw_token, auth.user, action="provision")
+        await provision_agent(
+            agent,
+            board,
+            gateway,
+            raw_token,
+            actor.user if actor.actor_type == "user" else None,
+            action="provision",
+        )
         await _send_wakeup_message(agent, client_config, verb="provisioned")
         agent.provision_confirm_token_hash = None
         agent.provision_requested_at = None
