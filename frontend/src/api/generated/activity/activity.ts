@@ -20,7 +20,10 @@ import type {
 import type {
   HTTPValidationError,
   LimitOffsetPageTypeVarCustomizedActivityEventRead,
+  LimitOffsetPageTypeVarCustomizedActivityTaskCommentFeedItemRead,
   ListActivityApiV1ActivityGetParams,
+  ListTaskCommentFeedApiV1ActivityTaskCommentsGetParams,
+  StreamTaskCommentFeedApiV1ActivityTaskCommentsStreamGetParams,
 } from ".././model";
 
 import { customFetch } from "../../mutator";
@@ -228,6 +231,536 @@ export function useListActivityApiV1ActivityGet<
     params,
     options,
   );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary List Task Comment Feed
+ */
+export type listTaskCommentFeedApiV1ActivityTaskCommentsGetResponse200 = {
+  data: LimitOffsetPageTypeVarCustomizedActivityTaskCommentFeedItemRead;
+  status: 200;
+};
+
+export type listTaskCommentFeedApiV1ActivityTaskCommentsGetResponse422 = {
+  data: HTTPValidationError;
+  status: 422;
+};
+
+export type listTaskCommentFeedApiV1ActivityTaskCommentsGetResponseSuccess =
+  listTaskCommentFeedApiV1ActivityTaskCommentsGetResponse200 & {
+    headers: Headers;
+  };
+export type listTaskCommentFeedApiV1ActivityTaskCommentsGetResponseError =
+  listTaskCommentFeedApiV1ActivityTaskCommentsGetResponse422 & {
+    headers: Headers;
+  };
+
+export type listTaskCommentFeedApiV1ActivityTaskCommentsGetResponse =
+  | listTaskCommentFeedApiV1ActivityTaskCommentsGetResponseSuccess
+  | listTaskCommentFeedApiV1ActivityTaskCommentsGetResponseError;
+
+export const getListTaskCommentFeedApiV1ActivityTaskCommentsGetUrl = (
+  params?: ListTaskCommentFeedApiV1ActivityTaskCommentsGetParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/activity/task-comments?${stringifiedParams}`
+    : `/api/v1/activity/task-comments`;
+};
+
+export const listTaskCommentFeedApiV1ActivityTaskCommentsGet = async (
+  params?: ListTaskCommentFeedApiV1ActivityTaskCommentsGetParams,
+  options?: RequestInit,
+): Promise<listTaskCommentFeedApiV1ActivityTaskCommentsGetResponse> => {
+  return customFetch<listTaskCommentFeedApiV1ActivityTaskCommentsGetResponse>(
+    getListTaskCommentFeedApiV1ActivityTaskCommentsGetUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getListTaskCommentFeedApiV1ActivityTaskCommentsGetQueryKey = (
+  params?: ListTaskCommentFeedApiV1ActivityTaskCommentsGetParams,
+) => {
+  return [
+    `/api/v1/activity/task-comments`,
+    ...(params ? [params] : []),
+  ] as const;
+};
+
+export const getListTaskCommentFeedApiV1ActivityTaskCommentsGetQueryOptions = <
+  TData = Awaited<
+    ReturnType<typeof listTaskCommentFeedApiV1ActivityTaskCommentsGet>
+  >,
+  TError = HTTPValidationError,
+>(
+  params?: ListTaskCommentFeedApiV1ActivityTaskCommentsGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<typeof listTaskCommentFeedApiV1ActivityTaskCommentsGet>
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getListTaskCommentFeedApiV1ActivityTaskCommentsGetQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listTaskCommentFeedApiV1ActivityTaskCommentsGet>>
+  > = ({ signal }) =>
+    listTaskCommentFeedApiV1ActivityTaskCommentsGet(params, {
+      signal,
+      ...requestOptions,
+    });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listTaskCommentFeedApiV1ActivityTaskCommentsGet>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListTaskCommentFeedApiV1ActivityTaskCommentsGetQueryResult =
+  NonNullable<
+    Awaited<ReturnType<typeof listTaskCommentFeedApiV1ActivityTaskCommentsGet>>
+  >;
+export type ListTaskCommentFeedApiV1ActivityTaskCommentsGetQueryError =
+  HTTPValidationError;
+
+export function useListTaskCommentFeedApiV1ActivityTaskCommentsGet<
+  TData = Awaited<
+    ReturnType<typeof listTaskCommentFeedApiV1ActivityTaskCommentsGet>
+  >,
+  TError = HTTPValidationError,
+>(
+  params: undefined | ListTaskCommentFeedApiV1ActivityTaskCommentsGetParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<typeof listTaskCommentFeedApiV1ActivityTaskCommentsGet>
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<
+            ReturnType<typeof listTaskCommentFeedApiV1ActivityTaskCommentsGet>
+          >,
+          TError,
+          Awaited<
+            ReturnType<typeof listTaskCommentFeedApiV1ActivityTaskCommentsGet>
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useListTaskCommentFeedApiV1ActivityTaskCommentsGet<
+  TData = Awaited<
+    ReturnType<typeof listTaskCommentFeedApiV1ActivityTaskCommentsGet>
+  >,
+  TError = HTTPValidationError,
+>(
+  params?: ListTaskCommentFeedApiV1ActivityTaskCommentsGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<typeof listTaskCommentFeedApiV1ActivityTaskCommentsGet>
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<
+            ReturnType<typeof listTaskCommentFeedApiV1ActivityTaskCommentsGet>
+          >,
+          TError,
+          Awaited<
+            ReturnType<typeof listTaskCommentFeedApiV1ActivityTaskCommentsGet>
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useListTaskCommentFeedApiV1ActivityTaskCommentsGet<
+  TData = Awaited<
+    ReturnType<typeof listTaskCommentFeedApiV1ActivityTaskCommentsGet>
+  >,
+  TError = HTTPValidationError,
+>(
+  params?: ListTaskCommentFeedApiV1ActivityTaskCommentsGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<typeof listTaskCommentFeedApiV1ActivityTaskCommentsGet>
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary List Task Comment Feed
+ */
+
+export function useListTaskCommentFeedApiV1ActivityTaskCommentsGet<
+  TData = Awaited<
+    ReturnType<typeof listTaskCommentFeedApiV1ActivityTaskCommentsGet>
+  >,
+  TError = HTTPValidationError,
+>(
+  params?: ListTaskCommentFeedApiV1ActivityTaskCommentsGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<typeof listTaskCommentFeedApiV1ActivityTaskCommentsGet>
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getListTaskCommentFeedApiV1ActivityTaskCommentsGetQueryOptions(
+      params,
+      options,
+    );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Stream Task Comment Feed
+ */
+export type streamTaskCommentFeedApiV1ActivityTaskCommentsStreamGetResponse200 =
+  {
+    data: unknown;
+    status: 200;
+  };
+
+export type streamTaskCommentFeedApiV1ActivityTaskCommentsStreamGetResponse422 =
+  {
+    data: HTTPValidationError;
+    status: 422;
+  };
+
+export type streamTaskCommentFeedApiV1ActivityTaskCommentsStreamGetResponseSuccess =
+  streamTaskCommentFeedApiV1ActivityTaskCommentsStreamGetResponse200 & {
+    headers: Headers;
+  };
+export type streamTaskCommentFeedApiV1ActivityTaskCommentsStreamGetResponseError =
+  streamTaskCommentFeedApiV1ActivityTaskCommentsStreamGetResponse422 & {
+    headers: Headers;
+  };
+
+export type streamTaskCommentFeedApiV1ActivityTaskCommentsStreamGetResponse =
+  | streamTaskCommentFeedApiV1ActivityTaskCommentsStreamGetResponseSuccess
+  | streamTaskCommentFeedApiV1ActivityTaskCommentsStreamGetResponseError;
+
+export const getStreamTaskCommentFeedApiV1ActivityTaskCommentsStreamGetUrl = (
+  params?: StreamTaskCommentFeedApiV1ActivityTaskCommentsStreamGetParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/activity/task-comments/stream?${stringifiedParams}`
+    : `/api/v1/activity/task-comments/stream`;
+};
+
+export const streamTaskCommentFeedApiV1ActivityTaskCommentsStreamGet = async (
+  params?: StreamTaskCommentFeedApiV1ActivityTaskCommentsStreamGetParams,
+  options?: RequestInit,
+): Promise<streamTaskCommentFeedApiV1ActivityTaskCommentsStreamGetResponse> => {
+  return customFetch<streamTaskCommentFeedApiV1ActivityTaskCommentsStreamGetResponse>(
+    getStreamTaskCommentFeedApiV1ActivityTaskCommentsStreamGetUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getStreamTaskCommentFeedApiV1ActivityTaskCommentsStreamGetQueryKey =
+  (params?: StreamTaskCommentFeedApiV1ActivityTaskCommentsStreamGetParams) => {
+    return [
+      `/api/v1/activity/task-comments/stream`,
+      ...(params ? [params] : []),
+    ] as const;
+  };
+
+export const getStreamTaskCommentFeedApiV1ActivityTaskCommentsStreamGetQueryOptions =
+  <
+    TData = Awaited<
+      ReturnType<typeof streamTaskCommentFeedApiV1ActivityTaskCommentsStreamGet>
+    >,
+    TError = HTTPValidationError,
+  >(
+    params?: StreamTaskCommentFeedApiV1ActivityTaskCommentsStreamGetParams,
+    options?: {
+      query?: Partial<
+        UseQueryOptions<
+          Awaited<
+            ReturnType<
+              typeof streamTaskCommentFeedApiV1ActivityTaskCommentsStreamGet
+            >
+          >,
+          TError,
+          TData
+        >
+      >;
+      request?: SecondParameter<typeof customFetch>;
+    },
+  ) => {
+    const { query: queryOptions, request: requestOptions } = options ?? {};
+
+    const queryKey =
+      queryOptions?.queryKey ??
+      getStreamTaskCommentFeedApiV1ActivityTaskCommentsStreamGetQueryKey(
+        params,
+      );
+
+    const queryFn: QueryFunction<
+      Awaited<
+        ReturnType<
+          typeof streamTaskCommentFeedApiV1ActivityTaskCommentsStreamGet
+        >
+      >
+    > = ({ signal }) =>
+      streamTaskCommentFeedApiV1ActivityTaskCommentsStreamGet(params, {
+        signal,
+        ...requestOptions,
+      });
+
+    return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+      Awaited<
+        ReturnType<
+          typeof streamTaskCommentFeedApiV1ActivityTaskCommentsStreamGet
+        >
+      >,
+      TError,
+      TData
+    > & { queryKey: DataTag<QueryKey, TData, TError> };
+  };
+
+export type StreamTaskCommentFeedApiV1ActivityTaskCommentsStreamGetQueryResult =
+  NonNullable<
+    Awaited<
+      ReturnType<typeof streamTaskCommentFeedApiV1ActivityTaskCommentsStreamGet>
+    >
+  >;
+export type StreamTaskCommentFeedApiV1ActivityTaskCommentsStreamGetQueryError =
+  HTTPValidationError;
+
+export function useStreamTaskCommentFeedApiV1ActivityTaskCommentsStreamGet<
+  TData = Awaited<
+    ReturnType<typeof streamTaskCommentFeedApiV1ActivityTaskCommentsStreamGet>
+  >,
+  TError = HTTPValidationError,
+>(
+  params:
+    | undefined
+    | StreamTaskCommentFeedApiV1ActivityTaskCommentsStreamGetParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof streamTaskCommentFeedApiV1ActivityTaskCommentsStreamGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof streamTaskCommentFeedApiV1ActivityTaskCommentsStreamGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof streamTaskCommentFeedApiV1ActivityTaskCommentsStreamGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useStreamTaskCommentFeedApiV1ActivityTaskCommentsStreamGet<
+  TData = Awaited<
+    ReturnType<typeof streamTaskCommentFeedApiV1ActivityTaskCommentsStreamGet>
+  >,
+  TError = HTTPValidationError,
+>(
+  params?: StreamTaskCommentFeedApiV1ActivityTaskCommentsStreamGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof streamTaskCommentFeedApiV1ActivityTaskCommentsStreamGet
+          >
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<
+            ReturnType<
+              typeof streamTaskCommentFeedApiV1ActivityTaskCommentsStreamGet
+            >
+          >,
+          TError,
+          Awaited<
+            ReturnType<
+              typeof streamTaskCommentFeedApiV1ActivityTaskCommentsStreamGet
+            >
+          >
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useStreamTaskCommentFeedApiV1ActivityTaskCommentsStreamGet<
+  TData = Awaited<
+    ReturnType<typeof streamTaskCommentFeedApiV1ActivityTaskCommentsStreamGet>
+  >,
+  TError = HTTPValidationError,
+>(
+  params?: StreamTaskCommentFeedApiV1ActivityTaskCommentsStreamGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof streamTaskCommentFeedApiV1ActivityTaskCommentsStreamGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Stream Task Comment Feed
+ */
+
+export function useStreamTaskCommentFeedApiV1ActivityTaskCommentsStreamGet<
+  TData = Awaited<
+    ReturnType<typeof streamTaskCommentFeedApiV1ActivityTaskCommentsStreamGet>
+  >,
+  TError = HTTPValidationError,
+>(
+  params?: StreamTaskCommentFeedApiV1ActivityTaskCommentsStreamGetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<
+            typeof streamTaskCommentFeedApiV1ActivityTaskCommentsStreamGet
+          >
+        >,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getStreamTaskCommentFeedApiV1ActivityTaskCommentsStreamGetQueryOptions(
+      params,
+      options,
+    );
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

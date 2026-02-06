@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 import { SignInButton, SignedIn, SignedOut, useAuth } from "@clerk/nextjs";
 import {
@@ -12,10 +12,8 @@ import {
   Settings,
   X,
 } from "lucide-react";
-import ReactMarkdown, { type Components } from "react-markdown";
-import remarkBreaks from "remark-breaks";
-import remarkGfm from "remark-gfm";
 
+import { Markdown } from "@/components/atoms/Markdown";
 import { DashboardSidebar } from "@/components/organisms/DashboardSidebar";
 import { TaskBoard } from "@/components/organisms/TaskBoard";
 import { DashboardShell } from "@/components/templates/DashboardShell";
@@ -143,118 +141,6 @@ const SSE_RECONNECT_BACKOFF = {
   jitter: 0.2,
   maxMs: 5 * 60_000,
 } as const;
-
-const MARKDOWN_TABLE_COMPONENTS: Components = {
-  table: ({ node: _node, className, ...props }) => (
-    <div className="my-3 overflow-x-auto">
-      <table className={cn("w-full border-collapse", className)} {...props} />
-    </div>
-  ),
-  thead: ({ node: _node, className, ...props }) => (
-    <thead className={cn("bg-slate-50", className)} {...props} />
-  ),
-  tbody: ({ node: _node, className, ...props }) => (
-    <tbody className={cn("divide-y divide-slate-100", className)} {...props} />
-  ),
-  tr: ({ node: _node, className, ...props }) => (
-    <tr className={cn("align-top", className)} {...props} />
-  ),
-  th: ({ node: _node, className, ...props }) => (
-    <th
-      className={cn(
-        "border border-slate-200 px-3 py-2 text-left text-xs font-semibold",
-        className,
-      )}
-      {...props}
-    />
-  ),
-  td: ({ node: _node, className, ...props }) => (
-    <td
-      className={cn("border border-slate-200 px-3 py-2 align-top", className)}
-      {...props}
-    />
-  ),
-};
-
-const MARKDOWN_COMPONENTS_BASIC: Components = {
-  ...MARKDOWN_TABLE_COMPONENTS,
-  p: ({ node: _node, className, ...props }) => (
-    <p className={cn("mb-2 last:mb-0", className)} {...props} />
-  ),
-  ul: ({ node: _node, className, ...props }) => (
-    <ul className={cn("mb-2 list-disc pl-5", className)} {...props} />
-  ),
-  ol: ({ node: _node, className, ...props }) => (
-    <ol className={cn("mb-2 list-decimal pl-5", className)} {...props} />
-  ),
-  li: ({ node: _node, className, ...props }) => (
-    <li className={cn("mb-1", className)} {...props} />
-  ),
-  strong: ({ node: _node, className, ...props }) => (
-    <strong className={cn("font-semibold", className)} {...props} />
-  ),
-};
-
-const MARKDOWN_COMPONENTS_DESCRIPTION: Components = {
-  ...MARKDOWN_COMPONENTS_BASIC,
-  p: ({ node: _node, className, ...props }) => (
-    <p className={cn("mb-3 last:mb-0", className)} {...props} />
-  ),
-  h1: ({ node: _node, className, ...props }) => (
-    <h1 className={cn("mb-2 text-base font-semibold", className)} {...props} />
-  ),
-  h2: ({ node: _node, className, ...props }) => (
-    <h2 className={cn("mb-2 text-sm font-semibold", className)} {...props} />
-  ),
-  h3: ({ node: _node, className, ...props }) => (
-    <h3 className={cn("mb-2 text-sm font-semibold", className)} {...props} />
-  ),
-  code: ({ node: _node, className, ...props }) => (
-    <code
-      className={cn("rounded bg-slate-100 px-1 py-0.5 text-xs", className)}
-      {...props}
-    />
-  ),
-  pre: ({ node: _node, className, ...props }) => (
-    <pre
-      className={cn(
-        "overflow-auto rounded-lg bg-slate-900 p-3 text-xs text-slate-100",
-        className,
-      )}
-      {...props}
-    />
-  ),
-};
-
-const MARKDOWN_REMARK_PLUGINS_BASIC = [remarkGfm];
-const MARKDOWN_REMARK_PLUGINS_WITH_BREAKS = [remarkGfm, remarkBreaks];
-
-type MarkdownVariant = "basic" | "comment" | "description";
-
-const Markdown = memo(function Markdown({
-  content,
-  variant,
-}: {
-  content: string;
-  variant: MarkdownVariant;
-}) {
-  const trimmed = content.trim();
-  const remarkPlugins =
-    variant === "comment"
-      ? MARKDOWN_REMARK_PLUGINS_WITH_BREAKS
-      : MARKDOWN_REMARK_PLUGINS_BASIC;
-  const components =
-    variant === "description"
-      ? MARKDOWN_COMPONENTS_DESCRIPTION
-      : MARKDOWN_COMPONENTS_BASIC;
-  return (
-    <ReactMarkdown remarkPlugins={remarkPlugins} components={components}>
-      {trimmed}
-    </ReactMarkdown>
-  );
-});
-
-Markdown.displayName = "Markdown";
 
 const formatShortTimestamp = (value: string) => {
   const date = parseApiDatetime(value);
@@ -405,9 +291,11 @@ LiveFeedCard.displayName = "LiveFeedCard";
 export default function BoardDetailPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const boardIdParam = params?.boardId;
   const boardId = Array.isArray(boardIdParam) ? boardIdParam[0] : boardIdParam;
   const { isSignedIn } = useAuth();
+  const taskIdFromUrl = searchParams.get("taskId");
 
   const [board, setBoard] = useState<Board | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -416,6 +304,7 @@ export default function BoardDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const selectedTaskIdRef = useRef<string | null>(null);
+  const openedTaskIdFromUrlRef = useRef<string | null>(null);
   const [comments, setComments] = useState<TaskComment[]>([]);
   const [liveFeed, setLiveFeed] = useState<TaskComment[]>([]);
   const [isCommentsLoading, setIsCommentsLoading] = useState(false);
@@ -1407,6 +1296,15 @@ export default function BoardDetailPage() {
     },
     [loadComments],
   );
+
+  useEffect(() => {
+    if (!taskIdFromUrl) return;
+    if (openedTaskIdFromUrlRef.current === taskIdFromUrl) return;
+    const exists = tasks.some((task) => task.id === taskIdFromUrl);
+    if (!exists) return;
+    openedTaskIdFromUrlRef.current = taskIdFromUrl;
+    openComments({ id: taskIdFromUrl });
+  }, [openComments, taskIdFromUrl, tasks]);
 
   const closeComments = () => {
     setIsDetailOpen(false);

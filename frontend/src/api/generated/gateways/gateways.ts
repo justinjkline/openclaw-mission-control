@@ -28,6 +28,7 @@ import type {
   GatewaySessionMessageRequest,
   GatewaySessionResponse,
   GatewaySessionsResponse,
+  GatewayTemplatesSyncResult,
   GatewayUpdate,
   GatewaysStatusApiV1GatewaysStatusGetParams,
   GatewaysStatusResponse,
@@ -39,6 +40,7 @@ import type {
   ListGatewaysApiV1GatewaysGetParams,
   OkResponse,
   SendGatewaySessionMessageApiV1GatewaysSessionsSessionIdMessagePostParams,
+  SyncGatewayTemplatesApiV1GatewaysGatewayIdTemplatesSyncPostParams,
 } from ".././model";
 
 import { customFetch } from "../../mutator";
@@ -2226,6 +2228,195 @@ export const useUpdateGatewayApiV1GatewaysGatewayIdPatch = <
 > => {
   return useMutation(
     getUpdateGatewayApiV1GatewaysGatewayIdPatchMutationOptions(options),
+    queryClient,
+  );
+};
+/**
+ * @summary Sync Gateway Templates
+ */
+export type syncGatewayTemplatesApiV1GatewaysGatewayIdTemplatesSyncPostResponse200 =
+  {
+    data: GatewayTemplatesSyncResult;
+    status: 200;
+  };
+
+export type syncGatewayTemplatesApiV1GatewaysGatewayIdTemplatesSyncPostResponse422 =
+  {
+    data: HTTPValidationError;
+    status: 422;
+  };
+
+export type syncGatewayTemplatesApiV1GatewaysGatewayIdTemplatesSyncPostResponseSuccess =
+  syncGatewayTemplatesApiV1GatewaysGatewayIdTemplatesSyncPostResponse200 & {
+    headers: Headers;
+  };
+export type syncGatewayTemplatesApiV1GatewaysGatewayIdTemplatesSyncPostResponseError =
+  syncGatewayTemplatesApiV1GatewaysGatewayIdTemplatesSyncPostResponse422 & {
+    headers: Headers;
+  };
+
+export type syncGatewayTemplatesApiV1GatewaysGatewayIdTemplatesSyncPostResponse =
+
+    | syncGatewayTemplatesApiV1GatewaysGatewayIdTemplatesSyncPostResponseSuccess
+    | syncGatewayTemplatesApiV1GatewaysGatewayIdTemplatesSyncPostResponseError;
+
+export const getSyncGatewayTemplatesApiV1GatewaysGatewayIdTemplatesSyncPostUrl =
+  (
+    gatewayId: string,
+    params?: SyncGatewayTemplatesApiV1GatewaysGatewayIdTemplatesSyncPostParams,
+  ) => {
+    const normalizedParams = new URLSearchParams();
+
+    Object.entries(params || {}).forEach(([key, value]) => {
+      if (value !== undefined) {
+        normalizedParams.append(
+          key,
+          value === null ? "null" : value.toString(),
+        );
+      }
+    });
+
+    const stringifiedParams = normalizedParams.toString();
+
+    return stringifiedParams.length > 0
+      ? `/api/v1/gateways/${gatewayId}/templates/sync?${stringifiedParams}`
+      : `/api/v1/gateways/${gatewayId}/templates/sync`;
+  };
+
+export const syncGatewayTemplatesApiV1GatewaysGatewayIdTemplatesSyncPost =
+  async (
+    gatewayId: string,
+    params?: SyncGatewayTemplatesApiV1GatewaysGatewayIdTemplatesSyncPostParams,
+    options?: RequestInit,
+  ): Promise<syncGatewayTemplatesApiV1GatewaysGatewayIdTemplatesSyncPostResponse> => {
+    return customFetch<syncGatewayTemplatesApiV1GatewaysGatewayIdTemplatesSyncPostResponse>(
+      getSyncGatewayTemplatesApiV1GatewaysGatewayIdTemplatesSyncPostUrl(
+        gatewayId,
+        params,
+      ),
+      {
+        ...options,
+        method: "POST",
+      },
+    );
+  };
+
+export const getSyncGatewayTemplatesApiV1GatewaysGatewayIdTemplatesSyncPostMutationOptions =
+  <TError = HTTPValidationError, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<
+          typeof syncGatewayTemplatesApiV1GatewaysGatewayIdTemplatesSyncPost
+        >
+      >,
+      TError,
+      {
+        gatewayId: string;
+        params?: SyncGatewayTemplatesApiV1GatewaysGatewayIdTemplatesSyncPostParams;
+      },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  }): UseMutationOptions<
+    Awaited<
+      ReturnType<
+        typeof syncGatewayTemplatesApiV1GatewaysGatewayIdTemplatesSyncPost
+      >
+    >,
+    TError,
+    {
+      gatewayId: string;
+      params?: SyncGatewayTemplatesApiV1GatewaysGatewayIdTemplatesSyncPostParams;
+    },
+    TContext
+  > => {
+    const mutationKey = [
+      "syncGatewayTemplatesApiV1GatewaysGatewayIdTemplatesSyncPost",
+    ];
+    const { mutation: mutationOptions, request: requestOptions } = options
+      ? options.mutation &&
+        "mutationKey" in options.mutation &&
+        options.mutation.mutationKey
+        ? options
+        : { ...options, mutation: { ...options.mutation, mutationKey } }
+      : { mutation: { mutationKey }, request: undefined };
+
+    const mutationFn: MutationFunction<
+      Awaited<
+        ReturnType<
+          typeof syncGatewayTemplatesApiV1GatewaysGatewayIdTemplatesSyncPost
+        >
+      >,
+      {
+        gatewayId: string;
+        params?: SyncGatewayTemplatesApiV1GatewaysGatewayIdTemplatesSyncPostParams;
+      }
+    > = (props) => {
+      const { gatewayId, params } = props ?? {};
+
+      return syncGatewayTemplatesApiV1GatewaysGatewayIdTemplatesSyncPost(
+        gatewayId,
+        params,
+        requestOptions,
+      );
+    };
+
+    return { mutationFn, ...mutationOptions };
+  };
+
+export type SyncGatewayTemplatesApiV1GatewaysGatewayIdTemplatesSyncPostMutationResult =
+  NonNullable<
+    Awaited<
+      ReturnType<
+        typeof syncGatewayTemplatesApiV1GatewaysGatewayIdTemplatesSyncPost
+      >
+    >
+  >;
+
+export type SyncGatewayTemplatesApiV1GatewaysGatewayIdTemplatesSyncPostMutationError =
+  HTTPValidationError;
+
+/**
+ * @summary Sync Gateway Templates
+ */
+export const useSyncGatewayTemplatesApiV1GatewaysGatewayIdTemplatesSyncPost = <
+  TError = HTTPValidationError,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<
+          typeof syncGatewayTemplatesApiV1GatewaysGatewayIdTemplatesSyncPost
+        >
+      >,
+      TError,
+      {
+        gatewayId: string;
+        params?: SyncGatewayTemplatesApiV1GatewaysGatewayIdTemplatesSyncPostParams;
+      },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<
+    ReturnType<
+      typeof syncGatewayTemplatesApiV1GatewaysGatewayIdTemplatesSyncPost
+    >
+  >,
+  TError,
+  {
+    gatewayId: string;
+    params?: SyncGatewayTemplatesApiV1GatewaysGatewayIdTemplatesSyncPostParams;
+  },
+  TContext
+> => {
+  return useMutation(
+    getSyncGatewayTemplatesApiV1GatewaysGatewayIdTemplatesSyncPostMutationOptions(
+      options,
+    ),
     queryClient,
   );
 };

@@ -6,6 +6,7 @@
  */
 
 export * from "./activityEventRead";
+export * from "./activityTaskCommentFeedItemRead";
 export * from "./agentCreate";
 export * from "./agentCreateHeartbeatConfig";
 export * from "./agentCreateIdentityProfile";
@@ -86,6 +87,8 @@ export * from "./gatewaysStatusApiV1GatewaysStatusGetParams";
 export * from "./gatewaysStatusResponse";
 export * from "./gatewayStatusApiV1GatewayStatusGet200";
 export * from "./gatewayStatusApiV1GatewayStatusGetParams";
+export * from "./gatewayTemplatesSyncError";
+export * from "./gatewayTemplatesSyncResult";
 export * from "./gatewayUpdate";
 export * from "./getGatewaySessionApiV1GatewaySessionsSessionIdGet200";
 export * from "./getGatewaySessionApiV1GatewaySessionsSessionIdGetParams";
@@ -97,6 +100,7 @@ export * from "./healthHealthGet200";
 export * from "./healthzHealthzGet200";
 export * from "./hTTPValidationError";
 export * from "./limitOffsetPageTypeVarCustomizedActivityEventRead";
+export * from "./limitOffsetPageTypeVarCustomizedActivityTaskCommentFeedItemRead";
 export * from "./limitOffsetPageTypeVarCustomizedAgentRead";
 export * from "./limitOffsetPageTypeVarCustomizedApprovalRead";
 export * from "./limitOffsetPageTypeVarCustomizedBoardMemoryRead";
@@ -117,6 +121,7 @@ export * from "./listGatewaysApiV1GatewaysGetParams";
 export * from "./listGatewaySessionsApiV1GatewaysSessionsGetParams";
 export * from "./listSessionsApiV1GatewaySessionsGet200";
 export * from "./listSessionsApiV1GatewaySessionsGetParams";
+export * from "./listTaskCommentFeedApiV1ActivityTaskCommentsGetParams";
 export * from "./listTaskCommentsApiV1AgentBoardsBoardIdTasksTaskIdCommentsGetParams";
 export * from "./listTaskCommentsApiV1BoardsBoardIdTasksTaskIdCommentsGetParams";
 export * from "./listTasksApiV1AgentBoardsBoardIdTasksGetParams";
@@ -130,7 +135,9 @@ export * from "./sendSessionMessageApiV1GatewaySessionsSessionIdMessagePostParam
 export * from "./streamAgentsApiV1AgentsStreamGetParams";
 export * from "./streamApprovalsApiV1BoardsBoardIdApprovalsStreamGetParams";
 export * from "./streamBoardMemoryApiV1BoardsBoardIdMemoryStreamGetParams";
+export * from "./streamTaskCommentFeedApiV1ActivityTaskCommentsStreamGetParams";
 export * from "./streamTasksApiV1BoardsBoardIdTasksStreamGetParams";
+export * from "./syncGatewayTemplatesApiV1GatewaysGatewayIdTemplatesSyncPostParams";
 export * from "./taskCardRead";
 export * from "./taskCardReadStatus";
 export * from "./taskCommentCreate";
