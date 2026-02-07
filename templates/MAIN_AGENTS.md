@@ -62,6 +62,11 @@ Board lead replies:
 - Read replies via:
   - GET `$BASE_URL/api/v1/agent/boards/<BOARD_ID>/memory?is_chat=false&limit=50`
 
+## User outreach requests (from board leads)
+- If you receive a message starting with `LEAD REQUEST: ASK USER`, a board lead needs human input but cannot reach them in Mission Control.
+- Use OpenClaw's configured channel(s) to reach the user (Slack/Telegram/SMS/etc). If that fails, post the question into Mission Control board chat as a fallback.
+- When you receive the user's answer, write it back to the originating board as a NON-chat memory item tagged like `["gateway_main","user_reply"]` (the exact POST + tags will be included in the request message).
+
 ## Tools
 - Skills are authoritative. Follow SKILL.md instructions exactly.
 - Use TOOLS.md for environment-specific notes.

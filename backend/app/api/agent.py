@@ -50,6 +50,8 @@ from app.schemas.gateway_coordination import (
     GatewayLeadBroadcastResponse,
     GatewayLeadMessageRequest,
     GatewayLeadMessageResponse,
+    GatewayMainAskUserRequest,
+    GatewayMainAskUserResponse,
 )
 from app.schemas.pagination import DefaultLimitOffsetPage
 from app.schemas.tasks import TaskCommentCreate, TaskCommentRead, TaskCreate, TaskRead, TaskUpdate
@@ -495,6 +497,100 @@ async def agent_heartbeat(
         payload=AgentHeartbeat(status=payload.status),
         session=session,
         actor=_actor(agent_ctx),
+    )
+
+
+@router.post(
+    "/boards/{board_id}/gateway/main/ask-user",
+    response_model=GatewayMainAskUserResponse,
+)
+async def ask_user_via_gateway_main(
+    payload: GatewayMainAskUserRequest,
+    board: Board = Depends(get_board_or_404),
+    session: AsyncSession = Depends(get_session),
+    agent_ctx: AgentAuthContext = Depends(get_agent_auth_context),
+) -> GatewayMainAskUserResponse:
+    import json
+
+    _guard_board_access(agent_ctx, board)
+    if not agent_ctx.agent.is_board_lead:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+
+    if not board.gateway_id:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Board is not attached to a gateway",
+        )
+    gateway = await session.get(Gateway, board.gateway_id)
+    if gateway is None or not gateway.url:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Gateway is not configured for this board",
+        )
+    main_session_key = (gateway.main_session_key or "").strip()
+    if not main_session_key:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Gateway main session key is required",
+        )
+    config = GatewayClientConfig(url=gateway.url, token=gateway.token)
+
+    correlation = payload.correlation_id.strip() if payload.correlation_id else ""
+    correlation_line = f"Correlation ID: {correlation}\n" if correlation else ""
+    preferred_channel = (payload.preferred_channel or "").strip()
+    channel_line = f"Preferred channel: {preferred_channel}\n" if preferred_channel else ""
+
+    tags = payload.reply_tags or ["gateway_main", "user_reply"]
+    tags_json = json.dumps(tags)
+    reply_source = payload.reply_source or "user_via_gateway_main"
+    base_url = settings.base_url or "http://localhost:8000"
+
+    message = (
+        "LEAD REQUEST: ASK USER\n"
+        f"Board: {board.name}\n"
+        f"Board ID: {board.id}\n"
+        f"From lead: {agent_ctx.agent.name}\n"
+        f"{correlation_line}"
+        f"{channel_line}\n"
+        f"{payload.content.strip()}\n\n"
+        "Please reach the user via your configured OpenClaw channel(s) (Slack/SMS/etc).\n"
+        "If you cannot reach them there, post the question in Mission Control board chat as a fallback.\n\n"
+        "When you receive the answer, reply in Mission Control by writing a NON-chat memory item on this board:\n"
+        f"POST {base_url}/api/v1/agent/boards/{board.id}/memory\n"
+        f'Body: {{"content":"<answer>","tags":{tags_json},"source":"{reply_source}"}}\n'
+        "Do NOT reply in OpenClaw chat."
+    )
+
+    try:
+        await ensure_session(main_session_key, config=config, label="Main Agent")
+        await send_message(message, session_key=main_session_key, config=config, deliver=True)
+    except OpenClawGatewayError as exc:
+        record_activity(
+            session,
+            event_type="gateway.lead.ask_user.failed",
+            message=f"Lead user question failed for {board.name}: {exc}",
+            agent_id=agent_ctx.agent.id,
+        )
+        await session.commit()
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
+
+    record_activity(
+        session,
+        event_type="gateway.lead.ask_user.sent",
+        message=f"Lead requested user info via gateway main for board: {board.name}.",
+        agent_id=agent_ctx.agent.id,
+    )
+
+    main_agent = (
+        await session.exec(select(Agent).where(col(Agent.openclaw_session_id) == main_session_key))
+    ).first()
+
+    await session.commit()
+
+    return GatewayMainAskUserResponse(
+        board_id=board.id,
+        main_agent_id=main_agent.id if main_agent else None,
+        main_agent_name=main_agent.name if main_agent else None,
     )
 
 

@@ -73,3 +73,19 @@ class GatewayLeadBroadcastResponse(SQLModel):
     failed: int = 0
     results: list[GatewayLeadBroadcastBoardResult] = Field(default_factory=list)
 
+
+class GatewayMainAskUserRequest(SQLModel):
+    correlation_id: str | None = None
+    content: NonEmptyStr
+    preferred_channel: str | None = None
+
+    # How the main agent should reply back into Mission Control (defaults interpreted by templates).
+    reply_tags: list[str] = Field(default_factory=lambda: ["gateway_main", "user_reply"])
+    reply_source: str | None = "user_via_gateway_main"
+
+
+class GatewayMainAskUserResponse(SQLModel):
+    ok: bool = True
+    board_id: UUID
+    main_agent_id: UUID | None = None
+    main_agent_name: str | None = None
