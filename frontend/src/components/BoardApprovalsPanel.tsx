@@ -5,7 +5,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useAuth } from "@/auth/clerk";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { Clock } from "lucide-react";
+import { CheckCircle2, Clock } from "lucide-react";
 import { Cell, Pie, PieChart } from "recharts";
 
 import { ApiError } from "@/api/mutator";
@@ -39,6 +39,7 @@ type BoardApprovalsPanelProps = {
   error?: string | null;
   onDecision?: (approvalId: string, status: "approved" | "rejected") => void;
   scrollable?: boolean;
+  boardLabelById?: Record<string, string>;
 };
 
 const formatTimestamp = (value?: string | null) => {
@@ -153,7 +154,7 @@ const payloadValue = (payload: Approval["payload"], key: string) => {
   return null;
 };
 
-const approvalSummary = (approval: Approval) => {
+const approvalSummary = (approval: Approval, boardLabel?: string | null) => {
   const payload = approval.payload ?? {};
   const taskId =
     approval.task_id ??
@@ -169,6 +170,7 @@ const approvalSummary = (approval: Approval) => {
   const role = payloadValue(payload, "role");
   const isAssign = approval.action_type.includes("assign");
   const rows: Array<{ label: string; value: string }> = [];
+  if (boardLabel) rows.push({ label: "Board", value: boardLabel });
   if (taskId) rows.push({ label: "Task", value: taskId });
   if (isAssign) {
     rows.push({
@@ -188,6 +190,7 @@ export function BoardApprovalsPanel({
   error: externalError,
   onDecision,
   scrollable = false,
+  boardLabelById,
 }: BoardApprovalsPanelProps) {
   const { isSignedIn } = useAuth();
   const queryClient = useQueryClient();
@@ -346,7 +349,25 @@ export function BoardApprovalsPanel({
       {loadingState ? (
         <p className="text-sm text-slate-500">Loading approvals…</p>
       ) : pendingCount === 0 && resolvedCount === 0 ? (
-        <p className="text-sm text-slate-500">No approvals yet.</p>
+        <div
+          className={cn(
+            "rounded-xl border border-dashed border-slate-200 bg-white px-6 py-10 text-center",
+            scrollable && "flex h-full items-center justify-center",
+          )}
+        >
+          <div className="max-w-sm">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+              <CheckCircle2 className="h-6 w-6" />
+            </div>
+            <p className="mt-4 text-sm font-semibold text-slate-900">
+              All clear
+            </p>
+            <p className="mt-2 text-sm text-slate-500">
+              No approvals to review right now. New approvals will show up here
+              as soon as they arrive.
+            </p>
+          </div>
+        </div>
       ) : (
         <div
           className={cn(
@@ -375,17 +396,29 @@ export function BoardApprovalsPanel({
               )}
             >
               {orderedApprovals.map((approval) => {
-                const summary = approvalSummary(approval);
+                const summary = approvalSummary(
+                  approval,
+                  boardLabelById?.[approval.board_id] ?? null,
+                );
                 const isSelected = effectiveSelectedId === approval.id;
                 const isPending = approval.status === "pending";
                 const titleRow = summary.rows.find(
                   (row) => row.label.toLowerCase() === "title",
                 );
                 const fallbackRow = summary.rows.find(
-                  (row) => row.label.toLowerCase() !== "title",
+                  (row) =>
+                    row.label.toLowerCase() !== "title" &&
+                    row.label.toLowerCase() !== "board",
                 );
                 const primaryLabel =
                   titleRow?.value ?? fallbackRow?.value ?? "Untitled";
+                const boardRow = summary.rows.find(
+                  (row) => row.label.toLowerCase() === "board",
+                );
+                const boardText =
+                  boardRow && boardRow.value !== primaryLabel
+                    ? boardRow.value
+                    : null;
                 return (
                   <button
                     key={approval.id}
@@ -413,6 +446,11 @@ export function BoardApprovalsPanel({
                     <p className="mt-2 text-sm font-semibold text-slate-900">
                       {primaryLabel}
                     </p>
+                    {boardText ? (
+                      <p className="mt-1 text-xs text-slate-500">
+                        Board · {boardText}
+                      </p>
+                    ) : null}
                     <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
                       <Clock className="h-3.5 w-3.5 opacity-60" />
                       <span>{formatTimestamp(approval.created_at)}</span>
@@ -442,7 +480,10 @@ export function BoardApprovalsPanel({
               </div>
             ) : (
               (() => {
-                const summary = approvalSummary(selectedApproval);
+                const summary = approvalSummary(
+                  selectedApproval,
+                  boardLabelById?.[selectedApproval.board_id] ?? null,
+                );
                 const titleRow = summary.rows.find(
                   (row) => row.label.toLowerCase() === "title",
                 );

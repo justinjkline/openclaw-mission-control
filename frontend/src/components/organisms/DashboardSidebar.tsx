@@ -6,6 +6,7 @@ import {
   Activity,
   BarChart3,
   Bot,
+  CheckCircle2,
   Folder,
   LayoutGrid,
   Network,
@@ -101,6 +102,18 @@ export function DashboardSidebar() {
           >
             <LayoutGrid className="h-4 w-4" />
             Boards
+          </Link>
+          <Link
+            href="/approvals"
+            className={cn(
+              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-slate-700 transition",
+              pathname.startsWith("/approvals")
+                ? "bg-blue-100 text-blue-800 font-medium"
+                : "hover:bg-slate-100",
+            )}
+          >
+            <CheckCircle2 className="h-4 w-4" />
+            Approvals
           </Link>
           <Link
             href="/activity"
