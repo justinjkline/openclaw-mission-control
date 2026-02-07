@@ -33,9 +33,13 @@ COPY --from=deps /app/.venv /app/.venv
 ENV PATH="/app/.venv/bin:${PATH}"
 
 # Copy app source
-COPY alembic ./alembic
-COPY alembic.ini ./alembic.ini
-COPY app ./app
+COPY backend/alembic ./alembic
+COPY backend/alembic.ini ./alembic.ini
+COPY backend/app ./app
+
+# Copy repo-level templates used by agent provisioning, etc.
+# (backend code resolves these from repo root)
+COPY templates ./templates
 
 # Default API port
 EXPOSE 8000

@@ -31,7 +31,10 @@ services:
 
   backend:
     build:
-      context: ./backend
+      # Build from repo root so the backend image can include repo-level assets
+      # like `templates/`.
+      context: .
+      dockerfile: backend/Dockerfile
     env_file:
       - ./backend/.env.example
     environment:
@@ -53,8 +56,12 @@ services:
       context: ./frontend
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    # Optional, user-managed env file.
+    # IMPORTANT: do NOT load `.env.example` here because it contains non-empty
+    # placeholder Clerk keys, which can accidentally flip Clerk "on".
     env_file:
-      - ./frontend/.env.example
+      - path: ./frontend/.env
+        required: false
     environment:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
     depends_on:
