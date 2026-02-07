@@ -415,8 +415,9 @@ export function BoardOnboardingChat({
                   value={extraContext}
                   onChange={(event) => setExtraContext(event.target.value)}
                   onKeyDown={(event) => {
-                    if (!(event.ctrlKey || event.metaKey)) return;
                     if (event.key !== "Enter") return;
+                    if (event.nativeEvent.isComposing) return;
+                    if (event.shiftKey) return;
                     event.preventDefault();
                     if (loading) return;
                     void submitExtraContext();
@@ -434,7 +435,7 @@ export function BoardOnboardingChat({
                   </Button>
                 </div>
                 <p className="text-xs text-slate-500">
-                  Tip: press Ctrl+Enter (or Cmd+Enter) to send.
+                  Tip: press Enter to send. Shift+Enter for a newline.
                 </p>
               </div>
             ) : (
@@ -479,15 +480,16 @@ export function BoardOnboardingChat({
                 value={otherText}
                 onChange={(event) => setOtherText(event.target.value)}
                 onKeyDown={(event) => {
-                  if (!(event.ctrlKey || event.metaKey)) return;
                   if (event.key !== "Enter") return;
+                  if (event.nativeEvent.isComposing) return;
+                  if (event.shiftKey) return;
                   event.preventDefault();
                   if (loading) return;
                   submitAnswer();
                 }}
               />
               <p className="text-xs text-slate-500">
-                Tip: press Ctrl+Enter (or Cmd+Enter) to send.
+                Tip: press Enter to send. Shift+Enter for a newline.
               </p>
             </div>
           ) : null}

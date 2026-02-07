@@ -342,6 +342,7 @@ export default function BoardDetailPage() {
   const [isCommentsLoading, setIsCommentsLoading] = useState(false);
   const [commentsError, setCommentsError] = useState<string | null>(null);
   const [newComment, setNewComment] = useState("");
+  const taskCommentInputRef = useRef<HTMLTextAreaElement | null>(null);
   const [isPostingComment, setIsPostingComment] = useState(false);
   const [postCommentError, setPostCommentError] = useState<string | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -1713,6 +1714,7 @@ export default function BoardDetailPage() {
       );
     } finally {
       setIsPostingComment(false);
+      taskCommentInputRef.current?.focus();
     }
   };
 
@@ -2612,8 +2614,18 @@ export default function BoardDetailPage() {
               </p>
               <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <Textarea
+                  ref={taskCommentInputRef}
                   value={newComment}
                   onChange={(event) => setNewComment(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key !== "Enter") return;
+                    if (event.nativeEvent.isComposing) return;
+                    if (event.shiftKey) return;
+                    event.preventDefault();
+                    if (isPostingComment) return;
+                    if (!newComment.trim()) return;
+                    void handlePostComment();
+                  }}
                   placeholder="Write a message for the assigned agent…"
                   className="min-h-[80px] bg-white"
                 />
