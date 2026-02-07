@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { usePageActive } from "@/hooks/usePageActive";
 
 import {
   answerOnboardingApiV1BoardsBoardIdOnboardingAnswerPost,
@@ -116,6 +117,7 @@ export function BoardOnboardingChat({
   boardId: string;
   onConfirmed: (board: BoardRead) => void;
 }) {
+  const isPageActive = usePageActive();
   const [session, setSession] = useState<BoardOnboardingRead | null>(null);
   const [loading, setLoading] = useState(false);
   const [otherText, setOtherText] = useState("");
@@ -180,10 +182,15 @@ export function BoardOnboardingChat({
   }, [boardId]);
 
   useEffect(() => {
-    startSession();
+    void startSession();
+  }, [startSession]);
+
+  useEffect(() => {
+    if (!isPageActive) return;
+    void refreshSession();
     const interval = setInterval(refreshSession, 2000);
     return () => clearInterval(interval);
-  }, [startSession, refreshSession]);
+  }, [isPageActive, refreshSession]);
 
   const handleAnswer = useCallback(
     async (value: string, freeText?: string) => {

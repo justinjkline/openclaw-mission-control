@@ -72,6 +72,7 @@ import type {
 import { createExponentialBackoff } from "@/lib/backoff";
 import { apiDatetimeToMs, parseApiDatetime } from "@/lib/datetime";
 import { cn } from "@/lib/utils";
+import { usePageActive } from "@/hooks/usePageActive";
 
 type Board = BoardRead;
 
@@ -298,6 +299,7 @@ export default function BoardDetailPage() {
   const boardIdParam = params?.boardId;
   const boardId = Array.isArray(boardIdParam) ? boardIdParam[0] : boardIdParam;
   const { isSignedIn } = useAuth();
+  const isPageActive = usePageActive();
   const taskIdFromUrl = searchParams.get("taskId");
 
   const [board, setBoard] = useState<Board | null>(null);
@@ -580,7 +582,9 @@ export default function BoardDetailPage() {
   };
 
   useEffect(() => {
+    if (!isPageActive) return;
     if (!isSignedIn || !boardId || !board) return;
+    if (!isChatOpen) return;
     let isCancelled = false;
     const abortController = new AbortController();
     const backoff = createExponentialBackoff(SSE_RECONNECT_BACKOFF);
@@ -685,9 +689,10 @@ export default function BoardDetailPage() {
         window.clearTimeout(reconnectTimeout);
       }
     };
-  }, [board, boardId, isSignedIn]);
+  }, [board, boardId, isChatOpen, isPageActive, isSignedIn]);
 
   useEffect(() => {
+    if (!isPageActive) return;
     if (!isSignedIn || !boardId || !board) return;
     let isCancelled = false;
     const abortController = new AbortController();
@@ -817,7 +822,7 @@ export default function BoardDetailPage() {
         window.clearTimeout(reconnectTimeout);
       }
     };
-  }, [board, boardId, isSignedIn]);
+  }, [board, boardId, isPageActive, isSignedIn]);
 
   useEffect(() => {
     if (!selectedTask) {
@@ -840,6 +845,7 @@ export default function BoardDetailPage() {
   }, [selectedTask]);
 
   useEffect(() => {
+    if (!isPageActive) return;
     if (!isSignedIn || !boardId || !board) return;
     let isCancelled = false;
     const abortController = new AbortController();
@@ -1003,9 +1009,10 @@ export default function BoardDetailPage() {
         window.clearTimeout(reconnectTimeout);
       }
     };
-  }, [board, boardId, isSignedIn, pushLiveFeed]);
+  }, [board, boardId, isPageActive, isSignedIn, pushLiveFeed]);
 
   useEffect(() => {
+    if (!isPageActive) return;
     if (!isSignedIn || !boardId) return;
     let isCancelled = false;
     const abortController = new AbortController();
@@ -1109,7 +1116,7 @@ export default function BoardDetailPage() {
         window.clearTimeout(reconnectTimeout);
       }
     };
-  }, [board, boardId, isSignedIn]);
+  }, [board, boardId, isPageActive, isSignedIn]);
 
   const resetForm = () => {
     setTitle("");
