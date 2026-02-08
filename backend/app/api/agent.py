@@ -70,13 +70,15 @@ from app.services.task_dependencies import (
 router = APIRouter(prefix="/agent", tags=["agent"])
 
 _AGENT_SESSION_PREFIX = "agent:"
+_SESSION_KEY_PARTS_MIN = 2
+_LEAD_SESSION_KEY_MISSING = "Lead agent has no session key"
 
 
 def _gateway_agent_id(agent: Agent) -> str:
     session_key = agent.openclaw_session_id or ""
     if session_key.startswith(_AGENT_SESSION_PREFIX):
         parts = session_key.split(":")
-        if len(parts) >= 2 and parts[1]:
+        if len(parts) >= _SESSION_KEY_PARTS_MIN and parts[1]:
             return parts[1]
     # Fall back to a stable slug derived from name (matches provisioning behavior).
     value = agent.name.lower().strip()
@@ -92,6 +94,13 @@ class SoulUpdateRequest(SQLModel):
 
 def _actor(agent_ctx: AgentAuthContext) -> ActorContext:
     return ActorContext(actor_type="agent", agent=agent_ctx.agent)
+
+
+def _require_lead_session_key(lead: Agent) -> str:
+    session_key = lead.openclaw_session_id
+    if not session_key:
+        raise ValueError(_LEAD_SESSION_KEY_MISSING)
+    return session_key
 
 
 def _guard_board_access(agent_ctx: AgentAuthContext, board: Board) -> None:
@@ -820,8 +829,7 @@ async def broadcast_gateway_lead_message(
                 user=None,
                 action="provision",
             )
-            if not lead.openclaw_session_id:
-                raise ValueError("Lead agent has no session key")
+            lead_session_key = _require_lead_session_key(lead)
             message = (
                 f"{header}\n"
                 f"Board: {board.name}\n"
@@ -834,8 +842,8 @@ async def broadcast_gateway_lead_message(
                 f'Body: {{"content":"...","tags":{tags_json},"source":"{reply_source}"}}\n'
                 "Do NOT reply in OpenClaw chat."
             )
-            await ensure_session(lead.openclaw_session_id, config=config, label=lead.name)
-            await send_message(message, session_key=lead.openclaw_session_id, config=config)
+            await ensure_session(lead_session_key, config=config, label=lead.name)
+            await send_message(message, session_key=lead_session_key, config=config)
             results.append(
                 GatewayLeadBroadcastBoardResult(
                     board_id=board.id,
