@@ -15,7 +15,8 @@ export default isClerkEnabled()
   ? clerkMiddleware(async (auth, req) => {
       if (isPublicRoute(req)) return NextResponse.next();
 
-      // Clerk typings in App Router return a Promise; keep middleware callback async.
+      // In middleware, `auth()` resolves to a session/auth context (Promise in current typings).
+      // Use redirectToSignIn() (instead of protect()) for unauthenticated requests.
       const { userId, redirectToSignIn } = await auth();
       if (!userId) {
         return redirectToSignIn({ returnBackUrl: req.url });
