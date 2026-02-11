@@ -24,7 +24,7 @@ It is derived from `backend/app/main.py` (router registration) and `backend/app/
 | `agents.py` | `/agents` | Thin API wrappers for async agent lifecycle operations. |
 | `approvals.py` | `/boards/{board_id}/approvals` | Approval listing, streaming, creation, and update endpoints. |
 | `auth.py` | `/auth` | Authentication bootstrap endpoints for the Mission Control API. |
-| `board_group_memory.py` | `` | Board-group memory CRUD and streaming endpoints. |
+| `board_group_memory.py` | `/board-groups/{group_id}/memory` and `/boards/{board_id}/group-memory` | Board-group memory CRUD and streaming endpoints. |
 | `board_groups.py` | `/board-groups` | Board group CRUD, snapshot, and heartbeat endpoints. |
 | `board_memory.py` | `/boards/{board_id}/memory` | Board memory CRUD and streaming endpoints. |
 | `board_onboarding.py` | `/boards/{board_id}/onboarding` | Board onboarding endpoints for user/agent collaboration. |
@@ -36,6 +36,54 @@ It is derived from `backend/app/main.py` (router registration) and `backend/app/
 | `souls_directory.py` | `/souls-directory` | API routes for searching and fetching souls-directory markdown entries. |
 | `tasks.py` | `/boards/{board_id}/tasks` | Task API routes for listing, streaming, and mutating board tasks. |
 | `users.py` | `/users` | User self-service API endpoints for profile retrieval and updates. |
+
+## Backend API layer notes (how modules are organized)
+
+Evidence: `backend/app/main.py`, `backend/app/api/*`, `backend/app/api/deps.py`.
+
+### Conventions
+
+- Each file under `backend/app/api/*` typically declares an `APIRouter` (`router = APIRouter(...)`) and defines endpoints with decorators like `@router.get(...)`, `@router.post(...)`, etc.
+- Board-scoped modules embed `{board_id}` in the prefix (e.g. `/boards/{board_id}/tasks`).
+- Streaming endpoints usually expose **SSE** endpoints at `.../stream` (see `sse-starlette` usage).
+
+### Where key behaviors live
+
+- **Router wiring / base prefix**: `backend/app/main.py` mounts these routers under `/api/v1/*`.
+- **Auth / access control** is mostly expressed through dependencies (see `backend/app/api/deps.py`):
+  - `require_admin_auth` — require an authenticated *admin user*.
+  - `require_admin_or_agent` — allow either an admin user or an authenticated agent.
+  - `get_board_for_actor_read` / `get_board_for_actor_write` — enforce board access for the calling actor.
+  - `require_org_member` / `require_org_admin` — enforce org membership/admin for user callers.
+- **Agent-only surface**: `backend/app/api/agent.py` uses `get_agent_auth_context` (X-Agent-Token) and contains board/task/memory endpoints specifically for automation.
+
+### Module-by-module map (prefix, key endpoints, and pointers)
+
+This is a “where to look” index, not a full OpenAPI dump. For exact parameters and response shapes, see:
+- route module file (`backend/app/api/<module>.py`)
+- schemas (`backend/app/schemas/*`)
+- models (`backend/app/models/*`)
+- services (`backend/app/services/*`)
+
+| Module | Prefix (under `/api/v1`) | Key endpoints (examples) | Main deps / auth | Pointers (schemas/models/services) |
+|---|---|---|---|---|
+| `activity.py` | `/activity` | `GET /activity` (events); `GET /activity/task-comments` + `/stream` | `require_admin_or_agent`, `require_org_member` | `app/models/activity_events.py`, `app/schemas/activity_events.py` |
+| `agent.py` | `/agent` | agent automation surface: boards/tasks/memory + gateway coordination | `get_agent_auth_context` (X-Agent-Token) | `backend/app/core/agent_auth.py`, `backend/app/services/openclaw/*` |
+| `agents.py` | `/agents` | agent lifecycle + SSE stream + heartbeat | org-admin gated for user callers; some endpoints allow agent access via deps | `app/schemas/agents.py`, `app/services/openclaw/provisioning_db.py` |
+| `approvals.py` | `/boards/{board_id}/approvals` | list/create/update approvals + `/stream` | `require_admin_or_agent` + board access deps | `app/models/approvals.py`, `app/schemas/approvals.py` |
+| `auth.py` | `/auth` | `POST /auth/bootstrap` | `get_auth_context` (Clerk/user) | `backend/app/core/auth.py`, `app/schemas/users.py` |
+| `board_group_memory.py` | `/board-groups/{group_id}/memory` and `/boards/{board_id}/group-memory` | list/create + `/stream` (group + board-context views) | `require_admin_or_agent`, `require_org_member`, board access deps | `app/models/board_group_memory.py`, `app/schemas/board_group_memory.py` |
+| `board_groups.py` | `/board-groups` | CRUD + snapshot + heartbeat apply | `require_org_member` / `require_org_admin` | `app/services/board_group_snapshot.py` |
+| `board_memory.py` | `/boards/{board_id}/memory` | list/create + `/stream` | `require_admin_or_agent` + board access deps | `app/models/board_memory.py`, `app/schemas/board_memory.py` |
+| `board_onboarding.py` | `/boards/{board_id}/onboarding` | start/answer/confirm onboarding; agent update callback | mix of admin-user and admin-or-agent deps | `app/models/board_onboarding.py`, `app/services/openclaw/onboarding_service.py` |
+| `boards.py` | `/boards` | list/create/update/delete; `/snapshot`; `/group-snapshot` | user/org access (`require_org_member`); read access via `get_board_for_actor_read` in some paths | `app/services/board_snapshot.py`, `app/schemas/boards.py` |
+| `gateway.py` | `/gateways` | session inspection + supported commands list | org-admin user only | `backend/app/services/openclaw/gateway_rpc.py`, `app/schemas/gateway_api.py` |
+| `gateways.py` | `/gateways` | gateway CRUD + template sync | org-admin user only | `app/models/gateways.py`, `app/services/openclaw/*` |
+| `metrics.py` | `/metrics` | `GET /metrics/dashboard` | org-member user access | `app/schemas/metrics.py` |
+| `organizations.py` | `/organizations` | org create + invites/membership flows | user (Clerk) + org member/admin checks | `app/services/organizations.py` |
+| `souls_directory.py` | `/souls-directory` | search + fetch markdown entries | `require_admin_or_agent` | `app/services/souls_directory.py`, `app/schemas/souls_directory.py` |
+| `tasks.py` | `/boards/{board_id}/tasks` | list/create/update/delete tasks; comments; `/stream` | mix of admin-only + admin-or-agent; board access via deps | `app/models/tasks.py`, `app/schemas/tasks.py`, `app/services/task_dependencies.py` |
+| `users.py` | `/users` | `GET/PATCH/DELETE /users/me` | user (Clerk) | `app/models/users.py`, `app/schemas/users.py` |
 
 ## `/activity` — `activity.py`
 *Activity listing and task-comment feed endpoints.*
