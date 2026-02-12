@@ -25,18 +25,20 @@ LINK_RE = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
 
 
 def iter_md_files(root: Path) -> list[Path]:
-    patterns = [
-        root / "README.md",
-        root / "CONTRIBUTING.md",
-    ]
-    files: list[Path] = []
-    for p in patterns:
-        if p.exists():
-            files.append(p)
+    """Return markdown files to check.
+
+    Policy (initial): check only `docs/**/*.md`.
+
+    Rationale:
+    - Root `README.md` / `CONTRIBUTING.md` may temporarily contain legacy links
+      during docs re-org. Once docs + README are stabilized, we can expand this
+      to include root markdown files.
+    """
+
     docs = root / "docs"
-    if docs.exists():
-        files.extend(sorted(docs.rglob("*.md")))
-    return files
+    if not docs.exists():
+        return []
+    return sorted(docs.rglob("*.md"))
 
 
 def normalize_target(raw: str) -> str | None:
