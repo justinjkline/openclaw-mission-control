@@ -75,14 +75,17 @@ Minimum release notes:
 
 ## 5) Tag + publish
 
-**TODO:** confirm the desired tag format (e.g. `v0.1.0`) and whether releases should be created from tags or from `master`.
+Tagging convention:
+- Use semver tags: `vMAJOR.MINOR.PATCH` (e.g. `v1.4.0`).
+- Create a GitHub Release from the tag (release notes can be manual for now).
+- If the repo already has existing tags/releases, mirror the established convention exactly.
 
 Suggested manual flow:
 
 ```bash
 # Example (adjust once tag conventions are decided)
-git tag -a v0.0.0 -m "Release v0.0.0"
-git push origin v0.0.0
+git tag -a v0.1.0 -m "Release v0.1.0"
+git push origin v0.1.0
 ```
 
 - [ ] Create a GitHub Release from the tag
