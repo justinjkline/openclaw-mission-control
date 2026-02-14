@@ -126,6 +126,16 @@ def _comment_validation_error() -> HTTPException:
     )
 
 
+def _task_update_forbidden_error(*, code: str, message: str) -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail={
+            "message": message,
+            "code": code,
+        },
+    )
+
+
 def _blocked_task_error(blocked_by_task_ids: Sequence[UUID]) -> HTTPException:
     # NOTE: Keep this payload machine-readable; UI and automation rely on it.
     return HTTPException(
@@ -1395,6 +1405,7 @@ async def update_task(
         board_id=board_id,
         previous_status=previous_status,
         previous_assigned=previous_assigned,
+        previous_in_progress_at=task.in_progress_at,
         status_requested=(requested_status is not None and requested_status != previous_status),
         updates=updates,
         comment=comment,
@@ -1416,21 +1427,12 @@ async def update_task(
     )
 
 
-@router.delete("/{task_id}", response_model=OkResponse)
-async def delete_task(
-    session: AsyncSession = SESSION_DEP,
-    task: Task = TASK_DEP,
-    auth: AuthContext = ADMIN_AUTH_DEP,
-) -> OkResponse:
-    """Delete a task and related records."""
-    if task.board_id is None:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
-    board = await Board.objects.by_id(task.board_id).first(session)
-    if board is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    if auth.user is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
-    await require_board_access(session, user=auth.user, board=board, write=True)
+async def delete_task_and_related_records(
+    session: AsyncSession,
+    *,
+    task: Task,
+) -> None:
+    """Delete a task and associated relational records, then commit."""
     await crud.delete_where(
         session,
         ActivityEvent,
@@ -1486,6 +1488,24 @@ async def delete_task(
     )
     await session.delete(task)
     await session.commit()
+
+
+@router.delete("/{task_id}", response_model=OkResponse)
+async def delete_task(
+    session: AsyncSession = SESSION_DEP,
+    task: Task = TASK_DEP,
+    auth: AuthContext = ADMIN_AUTH_DEP,
+) -> OkResponse:
+    """Delete a task and related records."""
+    if task.board_id is None:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
+    board = await Board.objects.by_id(task.board_id).first(session)
+    if board is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    if auth.user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+    await require_board_access(session, user=auth.user, board=board, write=True)
+    await delete_task_and_related_records(session, task=task)
     return OkResponse()
 
 
@@ -1650,6 +1670,7 @@ class _TaskUpdateInput:
     tag_ids: list[UUID] | None
     custom_field_values: TaskCustomFieldValues
     custom_field_values_set: bool
+    previous_in_progress_at: datetime | None = None
     normalized_tag_ids: list[UUID] | None = None
 
 
@@ -1967,8 +1988,7 @@ async def _apply_lead_task_update(
     if blocked_by:
         attempted_fields: set[str] = set(update.updates.keys())
         attempted_transition = (
-            "assigned_agent_id" in attempted_fields
-            or "status" in attempted_fields
+            "assigned_agent_id" in attempted_fields or "status" in attempted_fields
         )
         if attempted_transition:
             raise _blocked_task_error(blocked_by)
@@ -2051,7 +2071,29 @@ async def _apply_non_lead_agent_task_rules(
         and update.task.board_id
         and update.actor.agent.board_id != update.task.board_id
     ):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+        raise _task_update_forbidden_error(
+            code="task_board_mismatch",
+            message="Agent can only update tasks for their assigned board.",
+        )
+    if (
+        update.actor.agent
+        and "status" in update.updates
+        and (update.task.assigned_agent_id is None)
+    ):
+        raise _task_update_forbidden_error(
+            code="task_assignee_required",
+            message="Agents can only change status on tasks assigned to them.",
+        )
+    if (
+        update.actor.agent
+        and update.task.assigned_agent_id is not None
+        and update.task.assigned_agent_id != update.actor.agent.id
+        and "status" in update.updates
+    ):
+        raise _task_update_forbidden_error(
+            code="task_assignee_mismatch",
+            message="Agents can only change status on tasks assigned to them.",
+        )
     # Agents are limited to status/comment updates, and non-inbox status moves
     # must pass dependency checks before they can proceed.
     allowed_fields = {"status", "comment", "custom_field_values"}
@@ -2062,7 +2104,10 @@ async def _apply_non_lead_agent_task_rules(
             allowed_fields,
         )
     ):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+        raise _task_update_forbidden_error(
+            code="task_update_field_forbidden",
+            message="Agents may only update status, comment, and custom field values.",
+        )
     if "status" in update.updates:
         only_lead_can_change_status = (
             await session.exec(
@@ -2091,6 +2136,11 @@ async def _apply_non_lead_agent_task_rules(
             if blocked_ids:
                 raise _blocked_task_error(blocked_ids)
         if status_value == "inbox":
+            update.task.assigned_agent_id = None
+            update.task.previous_in_progress_at = update.task.in_progress_at
+            update.task.in_progress_at = None
+        elif status_value == "review":
+            update.task.previous_in_progress_at = update.task.in_progress_at
             update.task.assigned_agent_id = None
             update.task.in_progress_at = None
         else:
@@ -2151,6 +2201,11 @@ async def _apply_admin_task_rules(
     if "status" in update.updates:
         status_value = _required_status_value(update.updates["status"])
         if status_value == "inbox":
+            update.task.previous_in_progress_at = update.task.in_progress_at
+            update.task.assigned_agent_id = None
+            update.task.in_progress_at = None
+        elif status_value == "review":
+            update.task.previous_in_progress_at = update.task.in_progress_at
             update.task.assigned_agent_id = None
             update.task.in_progress_at = None
         elif status_value == "in_progress":
@@ -2303,11 +2358,17 @@ async def _finalize_updated_task(
     # ensure reviewers get context on readiness.
     if status_raw == "review":
         comment_text = (update.comment or "").strip()
+        review_comment_author = update.task.assigned_agent_id or update.previous_assigned
+        review_comment_since = (
+            update.task.previous_in_progress_at
+            if update.task.previous_in_progress_at is not None
+            else update.previous_in_progress_at
+        )
         if not comment_text and not await has_valid_recent_comment(
             session,
             update.task,
-            update.task.assigned_agent_id,
-            update.task.in_progress_at,
+            review_comment_author,
+            review_comment_since,
         ):
             raise _comment_validation_error()
 

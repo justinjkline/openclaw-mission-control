@@ -29,6 +29,7 @@ from app.db.pagination import paginate
 from app.db.session import async_session_maker
 from app.models.activity_events import ActivityEvent
 from app.models.agents import Agent
+from app.models.approvals import Approval
 from app.models.board_memory import BoardMemory
 from app.models.boards import Board
 from app.models.gateways import Gateway
@@ -108,6 +109,7 @@ class GatewayTemplateSyncOptions:
 
     user: User | None
     include_main: bool = True
+    lead_only: bool = False
     reset_sessions: bool = False
     rotate_tokens: bool = False
     force_bootstrap: bool = False
@@ -245,6 +247,7 @@ class OpenClawProvisioningService(OpenClawDBService):
             options = GatewayTemplateSyncOptions(
                 user=template_user,
                 include_main=options.include_main,
+                lead_only=options.lead_only,
                 reset_sessions=options.reset_sessions,
                 rotate_tokens=options.rotate_tokens,
                 force_bootstrap=options.force_bootstrap,
@@ -287,11 +290,12 @@ class OpenClawProvisioningService(OpenClawDBService):
             return result
         paused_board_ids = await _paused_board_ids(self.session, list(boards_by_id.keys()))
         if boards_by_id:
-            agents = await (
-                Agent.objects.by_field_in("board_id", list(boards_by_id.keys()))
-                .order_by(col(Agent.created_at).asc())
-                .all(self.session)
+            query = Agent.objects.by_field_in("board_id", list(boards_by_id.keys())).order_by(
+                col(Agent.created_at).asc(),
             )
+            if options.lead_only:
+                query = query.filter(col(Agent.is_board_lead).is_(True))
+            agents = await query.all(self.session)
         else:
             agents = []
 
@@ -922,6 +926,49 @@ class AgentLifecycleService(OpenClawDBService):
 
         return payload
 
+    async def count_non_lead_agents_for_board(
+        self,
+        *,
+        board_id: UUID,
+    ) -> int:
+        """Count board-scoped non-lead agents for spawn limit checks."""
+        statement = (
+            select(func.count(col(Agent.id)))
+            .where(col(Agent.board_id) == board_id)
+            .where(col(Agent.is_board_lead).is_(False))
+        )
+        count = (await self.session.exec(statement)).one()
+        return int(count or 0)
+
+    async def enforce_board_spawn_limit_for_lead(
+        self,
+        *,
+        board: Board,
+        actor: ActorContextLike,
+    ) -> None:
+        """Enforce `board.max_agents` when creation is requested by a lead agent.
+
+        The cap excludes the board lead itself.
+        """
+        if actor.actor_type != "agent":
+            return
+        if actor.agent is None or not actor.agent.is_board_lead:
+            return
+
+        worker_count = await self.count_non_lead_agents_for_board(board_id=board.id)
+        if worker_count < board.max_agents:
+            return
+
+        noun = "agent" if board.max_agents == 1 else "agents"
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "Board worker-agent limit reached: "
+                f"max_agents={board.max_agents} (excluding the lead); "
+                f"cannot create more than {board.max_agents} {noun}."
+            ),
+        )
+
     async def ensure_unique_agent_name(
         self,
         *,
@@ -1484,6 +1531,7 @@ class AgentLifecycleService(OpenClawDBService):
             user=actor.user if actor.actor_type == "user" else None,
             write=actor.actor_type == "user",
         )
+        await self.enforce_board_spawn_limit_for_lead(board=board, actor=actor)
         gateway, _client_config = await self.require_gateway(board)
         data = payload.model_dump()
         data["gateway_id"] = gateway.id
@@ -1772,6 +1820,13 @@ class AgentLifecycleService(OpenClawDBService):
             self.session,
             ActivityEvent,
             col(ActivityEvent.agent_id) == agent.id,
+            agent_id=None,
+            commit=False,
+        )
+        await crud.update_where(
+            self.session,
+            Approval,
+            col(Approval.agent_id) == agent.id,
             agent_id=None,
             commit=False,
         )

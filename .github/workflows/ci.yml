@@ -62,6 +62,13 @@ jobs:
 
 
 
+      - name: Enforce one migration per PR
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          ./scripts/ci/one_migration_per_pr.sh
+
       - name: Run migration integrity gate
         if: ${{ github.event_name == 'pull_request' }}
         run: |
