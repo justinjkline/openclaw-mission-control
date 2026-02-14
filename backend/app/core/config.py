@@ -58,6 +58,7 @@ class Settings(BaseSettings):
     webhook_queue_name: str = "webhook-dispatch"
     webhook_dispatch_schedule_id: str = "webhook-dispatch-batch"
     webhook_dispatch_throttle_seconds: float = 2.0
+    webhook_dispatch_schedule_interval_seconds: int = 900
     webhook_dispatch_max_retries: int = 3
 
     # Logging
