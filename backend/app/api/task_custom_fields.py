@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     from sqlmodel.ext.asyncio.session import AsyncSession
 
 
-router = APIRouter(prefix="/organizations/me/custom-fields", tags=["org-custom-fields"])
+router = APIRouter(prefix="/organizations/me/custom-fields", tags=["custom-fields"])
 SESSION_DEP = Depends(get_session)
 ORG_MEMBER_DEP = Depends(require_org_member)
 ORG_ADMIN_DEP = Depends(require_org_admin)
