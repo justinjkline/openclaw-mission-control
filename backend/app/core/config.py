@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Self
 
-from pydantic import Field, model_validator
+from pydantic import AliasChoices, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from app.core.auth_mode import AuthMode
@@ -49,6 +49,13 @@ class Settings(BaseSettings):
 
     cors_origins: str = ""
     base_url: str = ""
+
+    # GitHub integration
+    # Token used for GitHub REST API calls (checks/status updates). Supports GH_TOKEN or GITHUB_TOKEN.
+    github_token: str = Field(
+        default="",
+        validation_alias=AliasChoices("GH_TOKEN", "GITHUB_TOKEN"),
+    )
 
     # Database lifecycle
     db_auto_migrate: bool = False

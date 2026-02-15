@@ -38,6 +38,10 @@ from app.services.approval_task_links import (
     replace_approval_task_links,
     task_counts_for_board,
 )
+from app.services.github.mission_control_approval_check import (
+    github_approval_check_enabled,
+    sync_github_approval_check_for_task_ids,
+)
 from app.services.openclaw.gateway_dispatch import GatewayDispatchService
 
 if TYPE_CHECKING:
@@ -426,6 +430,20 @@ async def create_approval(
     await session.commit()
     await session.refresh(approval)
     title_by_id = await _task_titles_by_id(session, task_ids=set(task_ids))
+
+    if github_approval_check_enabled() and task_ids:
+        try:
+            await sync_github_approval_check_for_task_ids(
+                session,
+                board_id=board.id,
+                task_ids=list(task_ids),
+            )
+        except Exception:
+            logger.exception(
+                "approval.github_check_sync_failed",
+                extra={"board_id": str(board.id), "task_ids": [str(tid) for tid in task_ids]},
+            )
+
     return _approval_to_read(
         approval,
         task_ids=task_ids,
@@ -481,5 +499,26 @@ async def update_approval(
                 approval.id,
                 approval.status,
             )
+    if github_approval_check_enabled():
+        try:
+            task_ids_by_approval = await load_task_ids_by_approval(
+                session,
+                approval_ids=[approval.id],
+            )
+            approval_task_ids = task_ids_by_approval.get(approval.id) or []
+            if not approval_task_ids and approval.task_id is not None:
+                approval_task_ids = [approval.task_id]
+            if approval_task_ids:
+                await sync_github_approval_check_for_task_ids(
+                    session,
+                    board_id=board.id,
+                    task_ids=list(approval_task_ids),
+                )
+        except Exception:
+            logger.exception(
+                "approval.github_check_sync_failed",
+                extra={"board_id": str(board.id), "approval_id": str(approval.id)},
+            )
+
     reads = await _approval_reads(session, [approval])
     return reads[0]

@@ -23,6 +23,7 @@ from app.api.deps import (
     require_admin_auth,
     require_admin_or_agent,
 )
+from app.core.logging import get_logger
 from app.core.time import utcnow
 from app.db import crud
 from app.db.pagination import paginate
@@ -56,6 +57,10 @@ from app.services.approval_task_links import (
     load_task_ids_by_approval,
     pending_approval_conflicts_by_task,
 )
+from app.services.github.mission_control_approval_check import (
+    github_approval_check_enabled,
+    sync_github_approval_check_for_pr_url,
+)
 from app.services.mentions import extract_mentions, matches_agent_mention
 from app.services.openclaw.gateway_dispatch import GatewayDispatchService
 from app.services.openclaw.gateway_rpc import GatewayConfig as GatewayClientConfig
@@ -75,6 +80,8 @@ from app.services.task_dependencies import (
     replace_task_dependencies,
     validate_dependency_update,
 )
+
+logger = get_logger(__name__)
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator, Sequence
@@ -2401,6 +2408,22 @@ async def _finalize_updated_task(
     await _record_task_comment_from_update(session, update=update)
     await _record_task_update_activity(session, update=update)
     await _notify_task_update_assignment_changes(session, update=update)
+
+    # Sync GitHub approval gate check when a task's PR link changes.
+    if github_approval_check_enabled() and update.custom_field_values_set:
+        pr_url = update.custom_field_values.get("github_pr_url")
+        if isinstance(pr_url, str) and pr_url.strip():
+            try:
+                await sync_github_approval_check_for_pr_url(
+                    session,
+                    board_id=update.board_id,
+                    pr_url=pr_url.strip(),
+                )
+            except Exception:
+                logger.exception(
+                    "task.github_check_sync_failed",
+                    extra={"board_id": str(update.board_id), "task_id": str(update.task.id)},
+                )
 
     return await _task_read_response(
         session,
