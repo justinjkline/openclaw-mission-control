@@ -3,19 +3,25 @@
 import { cn } from "@/lib/utils";
 
 interface MarkdownProps {
-  children: string;
+  children?: string;
+  content?: string;
   className?: string;
+  variant?: "default" | "prose";
 }
 
 /**
  * Simple markdown renderer for basic formatting.
  * Renders markdown text with basic styling.
  */
-export function Markdown({ children, className }: MarkdownProps) {
+export function Markdown({ children, content, className, variant = "default" }: MarkdownProps) {
+  const text = content ?? children ?? "";
+
   return (
     <div
       className={cn(
-        "prose prose-sm dark:prose-invert max-w-none",
+        variant === "prose"
+          ? "prose prose-slate max-w-none"
+          : "prose prose-sm dark:prose-invert max-w-none",
         "prose-headings:font-semibold prose-headings:tracking-tight",
         "prose-p:leading-relaxed",
         "prose-code:rounded prose-code:bg-muted prose-code:px-1 prose-code:py-0.5",
@@ -23,7 +29,7 @@ export function Markdown({ children, className }: MarkdownProps) {
         className
       )}
       dangerouslySetInnerHTML={{
-        __html: renderMarkdown(children),
+        __html: renderMarkdown(text),
       }}
     />
   );
