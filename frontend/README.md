@@ -108,6 +108,83 @@ It will:
 - add `Authorization: Bearer <token>` automatically from local mode token or Clerk session
 - parse errors into an `ApiError` with status + parsed response body
 
+## Features
+
+### Agent Configuration
+
+Agents support rich identity profiles and custom templates:
+
+#### Identity Profile Fields
+
+| Field | Description |
+|-------|-------------|
+| `role` | Agent's role (e.g., "Generalist", "Code Reviewer") |
+| `communication_style` | How the agent communicates (e.g., "direct, concise") |
+| `emoji` | Agent's emoji identifier |
+| `intake_checklist` | Steps to run when receiving a task |
+| `execution_protocol` | Steps to follow during task execution |
+| `verification_commands` | Commands to verify work completion |
+| `escalation_triggers` | Conditions that trigger escalation |
+| `purpose` | Agent's mission/purpose statement |
+| `personality` | Personality traits description |
+| `custom_instructions` | Additional custom instructions |
+
+#### Template Overrides
+
+Agents can override default templates:
+
+- **Soul template**: Custom `SOUL.md` content defining the agent's core behavior
+- **Identity template**: Custom `IDENTITY.md` content defining agent identity
+
+Templates can be imported from the **Souls Directory** (see below).
+
+### Gateway Controls
+
+#### Template Sync
+
+The gateway detail page includes a "Sync Templates" button that pushes template updates to connected agents with options:
+
+| Option | Description |
+|--------|-------------|
+| Include main agent | Update the gateway's main agent |
+| Lead agents only | Only update lead agents, skip regular agents |
+| Reset sessions | Clear and restart agent sessions after sync |
+| Rotate tokens | Generate new authentication tokens |
+| Force bootstrap | Re-bootstrap agents even if already bootstrapped |
+| Overwrite | Replace existing USER.md and MEMORY.md files |
+
+You can also filter sync by board.
+
+#### Sessions Panel
+
+The gateway page displays active sessions with:
+
+- Session ID and status
+- Last activity timestamp
+- **View History**: See chronological event log for a session
+- **Send Message**: Send a message directly to a session
+
+### Souls Directory
+
+Browse and import soul templates from the community directory.
+
+**Access**: Administration → Souls (admin only)
+
+**Features**:
+
+- **Search**: Find souls by handle or slug
+- **View**: See full markdown content of a soul
+- **Copy**: Copy soul reference (`handle/slug`) or full content
+- **Import**: Import soul content directly into agent template fields
+
+To import a soul into an agent:
+
+1. Edit or create an agent
+2. Expand "Templates (Advanced)" section
+3. Click "Import from souls directory"
+4. Search and select a soul
+5. The soul content populates the Soul template field
+
 ## Mobile / responsive UI validation
 
 When changing UI intended to be mobile-ready, validate in Chrome (or similar) using the device toolbar at common widths (e.g. **320px**, **375px**, **768px**).
